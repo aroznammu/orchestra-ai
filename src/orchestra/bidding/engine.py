@@ -130,14 +130,19 @@ class BiddingEngine:
         thresholds = self._get_thresholds()
         requires_approval = self._needs_approval(action, change_pct, proposed_value, thresholds)
 
-        # In hard guardrail mode, auto-approve only safe decreases
         auto_approved = False
-        if not requires_approval:
-            auto_approved = True
-        elif self.phase == AutonomyPhase.SEMI_AUTONOMOUS and not requires_approval:
-            auto_approved = True
-        elif self.phase == AutonomyPhase.CONTROLLED_AUTONOMOUS:
+        if self.phase == AutonomyPhase.HARD_GUARDRAIL:
+            # Only auto-approve actions that don't require approval (safe decreases, pauses)
             auto_approved = not requires_approval
+        elif self.phase == AutonomyPhase.SEMI_AUTONOMOUS:
+            # Auto-approve within capped ranges; flag over-threshold for human review
+            if not requires_approval:
+                auto_approved = True
+            elif action in (BiddingAction.ADJUST_BID, BiddingAction.DECREASE_BUDGET, BiddingAction.PAUSE_CAMPAIGN):
+                auto_approved = change_pct <= SEMI_AUTO_THRESHOLDS["bid_increase_pct"]
+        elif self.phase == AutonomyPhase.CONTROLLED_AUTONOMOUS:
+            # Auto-approve everything except extreme outliers
+            auto_approved = not requires_approval or change_pct <= 50.0
 
         decision = BiddingDecision(
             tenant_id=self.tenant_id,
