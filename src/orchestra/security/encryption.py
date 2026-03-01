@@ -5,12 +5,19 @@ from cryptography.fernet import Fernet, InvalidToken
 from orchestra.config import get_settings
 
 
+_cached_fernet: Fernet | None = None
+
+
 def _get_fernet() -> Fernet:
+    global _cached_fernet
+    if _cached_fernet is not None:
+        return _cached_fernet
     settings = get_settings()
     key = settings.fernet_key.get_secret_value()
     if key.startswith("CHANGE-ME"):
         key = Fernet.generate_key().decode()
-    return Fernet(key.encode() if isinstance(key, str) else key)
+    _cached_fernet = Fernet(key.encode() if isinstance(key, str) else key)
+    return _cached_fernet
 
 
 def encrypt_token(plaintext: str) -> str:

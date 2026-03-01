@@ -1,7 +1,6 @@
-"""Financial audit trail.
+"""Financial audit trail with DB write-through.
 
-Logs every spend decision with reasoning, approval status, and outcome.
-Provides query interface for compliance auditing.
+Keeps in-memory cache for fast reads, persists to PostgreSQL for durability.
 """
 
 from datetime import UTC, datetime
@@ -20,14 +19,14 @@ class AuditEntry(BaseModel):
     user_id: str | None = None
     agent: str | None = None
     action: str
-    category: str  # financial, campaign, platform, auth, data, system
+    category: str
     resource_type: str = ""
     resource_id: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
     reasoning: str = ""
-    approval_status: str | None = None  # pending, approved, rejected, auto_approved
+    approval_status: str | None = None
     approved_by: str | None = None
-    outcome: str = "success"  # success, failure, pending
+    outcome: str = "success"
     risk_score: float = 0.0
     ip_address: str | None = None
     timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
@@ -45,8 +44,48 @@ class FinancialAuditEntry(AuditEntry):
     budget_utilization_pct: float | None = None
 
 
+def _safe_uuid(value: str | None):
+    """Convert string to UUID, returning None if invalid."""
+    if not value:
+        return None
+    try:
+        import uuid as _uuid
+        return _uuid.UUID(value)
+    except (ValueError, AttributeError):
+        return None
+
+
+async def _persist_audit_entry(entry: AuditEntry) -> None:
+    """Write-through to audit_logs DB table. Fire-and-forget."""
+    try:
+        from orchestra.db.models import AuditLog
+        from orchestra.db.session import async_session_factory
+
+        async with async_session_factory() as session:
+            record = AuditLog(
+                tenant_id=_safe_uuid(entry.tenant_id),
+                user_id=_safe_uuid(entry.user_id),
+                action=entry.action,
+                resource_type=entry.resource_type or entry.category,
+                resource_id=entry.resource_id,
+                details={
+                    "category": entry.category,
+                    "reasoning": entry.reasoning,
+                    "outcome": entry.outcome,
+                    "risk_score": entry.risk_score,
+                    **({"agent": entry.agent} if entry.agent else {}),
+                    **(entry.details or {}),
+                },
+                ip_address=entry.ip_address,
+            )
+            session.add(record)
+            await session.commit()
+    except Exception as e:
+        logger.debug("audit_db_write_skipped", error=str(e))
+
+
 class AuditTrail:
-    """Centralized audit trail for all operations."""
+    """Centralized audit trail with in-memory cache + DB persistence."""
 
     def __init__(self) -> None:
         self._entries: list[AuditEntry] = []
@@ -82,6 +121,13 @@ class AuditTrail:
             ip_address=ip_address,
         )
         self._entries.append(entry)
+
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_persist_audit_entry(entry))
+        except RuntimeError:
+            pass
 
         logger.info(
             "audit_log",
@@ -133,6 +179,13 @@ class AuditTrail:
             budget_utilization_pct=budget_utilization_pct,
         )
         self._entries.append(entry)
+
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_persist_audit_entry(entry))
+        except RuntimeError:
+            pass
 
         logger.info(
             "financial_audit",
@@ -227,7 +280,6 @@ class AuditTrail:
         return {k: round(v, 2) for k, v in by_platform.items()}
 
 
-# Singleton
 _audit_trail: AuditTrail | None = None
 
 

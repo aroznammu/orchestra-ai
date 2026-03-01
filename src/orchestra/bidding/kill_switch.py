@@ -1,6 +1,6 @@
-"""Kill switch -- immediate halt of all spend across all platforms.
+"""Kill switch with DB write-through.
 
-Accessible via API, CLI, and future dashboard.
+In-memory state for fast checks, events persisted to PostgreSQL.
 Once activated, NO spend operations can proceed until manually deactivated.
 """
 
@@ -17,12 +17,43 @@ logger = structlog.get_logger("bidding.kill_switch")
 class KillSwitchEvent(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     tenant_id: str
-    action: str  # activate, deactivate
+    action: str
     triggered_by: str
     reason: str
     timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     affected_platforms: list[str] = Field(default_factory=list)
     affected_campaigns: list[str] = Field(default_factory=list)
+
+
+async def _persist_ks_event(event: KillSwitchEvent) -> None:
+    """Write-through to kill_switch_events DB table. Fire-and-forget."""
+    try:
+        from orchestra.db.models import KillSwitchEventLog
+        from orchestra.db.session import async_session_factory
+
+        async with async_session_factory() as session:
+            record = KillSwitchEventLog(
+                tenant_id=event.tenant_id,
+                action=event.action,
+                triggered_by=event.triggered_by,
+                reason=event.reason,
+                affected_platforms=event.affected_platforms,
+                affected_campaigns=event.affected_campaigns,
+            )
+            session.add(record)
+            await session.commit()
+    except Exception as e:
+        logger.debug("ks_db_write_skipped", error=str(e))
+
+
+def _fire_persist(event: KillSwitchEvent) -> None:
+    """Schedule DB persistence if an event loop is running."""
+    import asyncio
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(_persist_ks_event(event))
+    except RuntimeError:
+        pass
 
 
 class KillSwitch:
@@ -52,6 +83,7 @@ class KillSwitch:
             reason=reason,
         )
         self._event_log.append(event)
+        _fire_persist(event)
 
         logger.critical(
             "KILL_SWITCH_GLOBAL_ACTIVATED",
@@ -72,6 +104,7 @@ class KillSwitch:
             reason="Manual deactivation",
         )
         self._event_log.append(event)
+        _fire_persist(event)
 
         logger.info("kill_switch_global_deactivated", triggered_by=triggered_by)
 
@@ -97,6 +130,7 @@ class KillSwitch:
             affected_campaigns=affected_campaigns or [],
         )
         self._event_log.append(event)
+        _fire_persist(event)
 
         logger.critical(
             "KILL_SWITCH_TENANT_ACTIVATED",
@@ -118,6 +152,7 @@ class KillSwitch:
             reason="Manual deactivation",
         )
         self._event_log.append(event)
+        _fire_persist(event)
 
         logger.info(
             "kill_switch_tenant_deactivated",
@@ -145,7 +180,6 @@ class KillSwitch:
         return [e.model_dump() for e in events[-limit:]]
 
 
-# Singleton
 _kill_switch: KillSwitch | None = None
 
 

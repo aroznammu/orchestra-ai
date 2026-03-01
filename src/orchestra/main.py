@@ -30,6 +30,26 @@ settings = get_settings()
 logger = structlog.get_logger("main")
 
 
+async def _run_migrations() -> None:
+    """Apply pending Alembic migrations if PostgreSQL is available."""
+    try:
+        from alembic import command
+        from alembic.config import Config
+
+        alembic_cfg = Config(str(pathlib.Path(__file__).parents[2] / "alembic.ini"))
+        alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
+        alembic_cfg.set_main_option(
+            "script_location",
+            str(pathlib.Path(__file__).parent / "db" / "migrations"),
+        )
+
+        import asyncio
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+        logger.info("db_migrations_applied")
+    except Exception as e:
+        logger.warning("db_migrations_skipped", error=str(e))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ANN201
     """Startup and shutdown events."""
@@ -40,6 +60,8 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
         stealth_mode=settings.stealth_mode,
         debug=settings.debug,
     )
+    if "postgresql" in settings.database_url:
+        await _run_migrations()
     yield
     logger.info("shutting_down")
 

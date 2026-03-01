@@ -236,6 +236,23 @@ class Experiment(TimestampMixin, Base):
     campaign: Mapped["Campaign"] = relationship(back_populates="experiments")
 
 
+class KillSwitchEventLog(Base):
+    """Persisted kill switch event history."""
+
+    __tablename__ = "kill_switch_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    triggered_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    affected_platforms: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    affected_campaigns: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+
+
 class SpendRecord(TimestampMixin, Base):
     """Tracks every spend event for financial audit trail."""
 
