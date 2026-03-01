@@ -19,7 +19,7 @@ classifiers = [
 orchestra = "orchestra.cli.app:app"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 
 # Web framework
 fastapi = "^0.115"

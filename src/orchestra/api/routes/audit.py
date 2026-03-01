@@ -3,7 +3,7 @@
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 
 from orchestra.api.deps import CurrentUser
 from orchestra.security.audit_trail import get_audit_trail
@@ -21,14 +21,14 @@ async def get_audit_log(
     outcome: str | None = None,
     limit: int = Query(default=50, le=500),
     offset: int = Query(default=0, ge=0),
-    user: dict = Depends(CurrentUser),
+    user: CurrentUser = None,
 ) -> dict[str, Any]:
     """Query audit log entries."""
-    check_permission(user.get("role", "viewer"), Permission.AUDIT_VIEW)
+    check_permission(user.role, Permission.AUDIT_VIEW)
 
     trail = get_audit_trail()
     entries = trail.query(
-        tenant_id=user.get("tenant_id", ""),
+        tenant_id=user.tenant_id,
         category=category,
         action=action,
         outcome=outcome,
@@ -47,24 +47,24 @@ async def get_audit_log(
 @router.get("/financial")
 async def get_financial_audit(
     platform: str | None = None,
-    user: dict = Depends(CurrentUser),
+    user: CurrentUser = None,
 ) -> dict[str, Any]:
     """Get financial audit summary."""
-    check_permission(user.get("role", "viewer"), Permission.AUDIT_VIEW)
+    check_permission(user.role, Permission.AUDIT_VIEW)
 
     trail = get_audit_trail()
     return trail.get_financial_summary(
-        tenant_id=user.get("tenant_id", ""),
+        tenant_id=user.tenant_id,
         platform=platform,
     )
 
 
 @router.get("/stats")
 async def get_audit_stats(
-    user: dict = Depends(CurrentUser),
+    user: CurrentUser = None,
 ) -> dict[str, Any]:
     """Get audit statistics."""
-    check_permission(user.get("role", "viewer"), Permission.AUDIT_VIEW)
+    check_permission(user.role, Permission.AUDIT_VIEW)
 
     trail = get_audit_trail()
-    return trail.get_stats(tenant_id=user.get("tenant_id", ""))
+    return trail.get_stats(tenant_id=user.tenant_id)
