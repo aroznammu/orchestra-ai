@@ -48,6 +48,7 @@ aiokafka = "^0.12"
 
 # CLI
 typer = {extras = ["all"], version = "^0.15"}
+rich = "^13.0"
 
 # Config & validation
 pydantic = {extras = ["email"], version = "^2.10"}
