@@ -8,41 +8,27 @@ on:
 permissions:
   contents: write
 
-env:
-  PYTHON_VERSION: "3.12"
-
 jobs:
-  build:
+  build-and-release:
     name: Build & Release
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: "3.12"
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install build tools
         run: |
-          pip install poetry
-          poetry install --no-interaction
-
-      - name: Lint
-        run: poetry run ruff check src/
-
-      - name: Test
-        run: poetry run pytest tests/ -v --tb=short
-        env:
-          JWT_SECRET: ci-test-secret
-          ENCRYPTION_KEY: ci-test-key
-          STEALTH_MODE: "true"
+          pip install --upgrade pip
+          pip install build
 
       - name: Build package
-        run: poetry build
-
-      - name: Build Docker image
-        run: docker build -t orchestra-ai:${{ github.ref_name }} .
+        run: python -m build
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

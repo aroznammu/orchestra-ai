@@ -1,182 +1,291 @@
-# OrchestraAI
-
-**AI-Native Marketing Orchestration Platform**
-
-> One AI brain. Nine platforms. Zero guesswork.
-
-OrchestraAI is an open-source, self-hostable platform that uses multi-agent AI to orchestrate marketing campaigns across 9 social and search platforms simultaneously. It sees what no single platform can: where your next dollar produces the best return -- everywhere.
-
-<!--
-NOTE: This repository is currently PRIVATE (stealth mode).
-Badges, deploy buttons, and public links will be added before public launch.
--->
+<p align="center">
+  <h1 align="center">OrchestraAI</h1>
+  <p align="center">
+    <strong>AI-native marketing orchestration with financial guardrails.</strong><br>
+    One CLI. Nine platforms. Zero runaway spend.
+  </p>
+  <p align="center">
+    <img src="https://img.shields.io/badge/python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12+">
+    <img src="https://img.shields.io/badge/license-Apache_2.0-blue?style=flat-square" alt="License">
+    <img src="https://img.shields.io/badge/tests-273_passing-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/code_style-ruff-D7FF64?style=flat-square" alt="Ruff">
+    <img src="https://img.shields.io/badge/framework-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+    <img src="https://img.shields.io/badge/agents-LangGraph-FF6F00?style=flat-square" alt="LangGraph">
+  </p>
+</p>
 
 ---
 
-## Features
+OrchestraAI is an open-source platform that lets you manage campaigns across
+**Twitter, YouTube, TikTok, Pinterest, Facebook, Instagram, LinkedIn, Snapchat,
+and Google Ads** from a single CLI or API -- powered by a LangGraph multi-agent
+orchestrator with 3-phase guardrailed bidding and 3-tier financial risk containment.
 
-| Feature | Description |
-|---------|-------------|
-| **Multi-Agent AI** | LangGraph orchestrator with 6 specialized agents (compliance, content, optimization, analytics, policy, platform) |
-| **9 Platform Connectors** | Twitter/X, YouTube, Facebook, Instagram, LinkedIn, TikTok, Pinterest, Snapchat, Google Ads |
-| **Cross-Platform Intelligence** | Unified ROI, marginal return analysis, multi-touch attribution -- what no single platform can see |
-| **Guardrailed Bidding** | 3-phase autonomy model: Hard Guardrail -> Semi-Autonomous -> Controlled Autonomous |
-| **Data Flywheel** | Every campaign makes the system smarter (performance-weighted embeddings) |
-| **Kill Switch** | Instant halt of all spend via API, CLI, or dashboard |
-| **GDPR/CCPA Ready** | Data export, deletion, consent tracking built-in |
-| **Self-Hostable** | Docker Compose for local, full production deployment support |
+## Install in 60 Seconds
 
-## Architecture
+```bash
+# Clone and install
+git clone https://github.com/orchestraai/orchestraai.git
+cd orchestraai
+pip install -e ".[dev]"
 
+# Start infrastructure (Postgres, Redis, Qdrant, Kafka, Ollama)
+docker compose up -d
+
+# Copy the example env and configure
+cp .env.example .env
+
+# Verify everything is running
+orchestra status
 ```
-User Request (API / CLI)
-        |
-   [Orchestrator]
-        |
-   classify_intent
-        |
-   compliance_gate  ← always runs first
-        |
-   ┌────┴────────────┐
-content    analytics    optimize
-   └────┬────────────┘
-        |
-     respond
-```
-
-### Tech Stack
-
-- **Python 3.12+** / **FastAPI** / **Pydantic v2**
-- **LangGraph** + **LangChain** -- multi-agent orchestration
-- **Qdrant** -- vector database for RAG and performance embeddings
-- **PostgreSQL 16** -- relational data with multi-tenant isolation
-- **Redis 7** -- caching + real-time event bus (Streams)
-- **Apache Kafka 3.8** -- durable event bus (KRaft, no Zookeeper)
-- **Ollama** -- local LLM serving (free, no API key needed)
-- **SQLAlchemy 2.0** (async) / **Alembic** -- ORM + migrations
 
 ## Quick Start
 
 ```bash
-# Clone and configure
-git clone <repository-url>
-cd orchestra-ai
-cp .env.example .env
+# Register and authenticate
+orchestra auth register --email you@company.com --name "Your Name" --tenant "Acme Corp"
 
-# Start infrastructure
-docker compose up -d
+# Create a campaign across multiple platforms
+orchestra campaign create
+# → Interactive: name, platforms (twitter,instagram,linkedin), budget
 
-# Install dependencies
-pip install poetry
-poetry install
+# Let the AI orchestrator do the work
+orchestra ask "Write a product launch post for Twitter and LinkedIn, professional tone"
 
-# Run migrations
-poetry run alembic upgrade head
+# Check performance across all connected platforms
+orchestra analytics --days 7
 
-# Start the API
-poetry run uvicorn orchestra.main:app --reload
+# List your campaigns
+orchestra campaign list
 ```
 
-API available at `http://localhost:8000`
-Docs at `http://localhost:8000/docs` (debug mode)
-
-### Using the CLI
+<details>
+<summary><strong>More CLI examples</strong></summary>
 
 ```bash
-poetry run orchestra version
-poetry run orchestra status
-poetry run orchestra campaign list
-poetry run orchestra connect add twitter
+# Natural-language orchestration
+orchestra ask "Optimize my Q1 campaign budget across platforms"
+orchestra ask "Generate a carousel post for Instagram about our new feature"
+orchestra ask "Show me engagement trends for the last 30 days"
+
+# Campaign lifecycle
+orchestra campaign get <campaign-id>
+orchestra campaign launch <campaign-id>
+orchestra campaign pause <campaign-id>
+
+# Account management
+orchestra auth whoami
+orchestra auth logout
+orchestra config
+orchestra version
 ```
+
+</details>
+
+## Why Not Hootsuite?
+
+| Capability | OrchestraAI | Hootsuite | Buffer | DIY Scripts |
+|---|:---:|:---:|:---:|:---:|
+| **AI Agent Orchestration** (LangGraph multi-agent graph) | :white_check_mark: | :x: | :x: | :x: |
+| **Cross-Platform Intelligence** (ROI normalization, marginal returns) | :white_check_mark: | :x: | :x: | :x: |
+| **Guardrailed Bidding** (3-phase autonomy model) | :white_check_mark: | :x: | :x: | :x: |
+| **Financial Risk Containment** (3-tier caps, anomaly detection, kill switch) | :white_check_mark: | :x: | :x: | :x: |
+| **Self-Hostable** (Docker Compose, your data stays yours) | :white_check_mark: | :x: | :x: | :white_check_mark: |
+| **CLI-First** (Typer + Rich, scriptable, pipe-friendly) | :white_check_mark: | :x: | :x: | :white_check_mark: |
+| **RAG Memory** (Qdrant vector store, learns from your campaigns) | :white_check_mark: | :x: | :x: | :x: |
+| **Open Source** (Apache 2.0, extend anything) | :white_check_mark: | :x: | :x: | :white_check_mark: |
+| 9 Platform Connectors | :white_check_mark: | :white_check_mark: | Partial | Manual |
+
+## Architecture
+
+The core is a **LangGraph StateGraph** with 8 nodes and conditional routing.
+Every request passes through a compliance gate before any action is taken.
+
+```mermaid
+graph TD
+    INPUT([User Input / CLI]) --> CLASSIFY[Classify Intent]
+    CLASSIFY --> COMPLIANCE{Compliance Gate}
+
+    COMPLIANCE -->|Blocked| RESPOND[Build Response]
+    COMPLIANCE -->|Content| CONTENT[Content Agent]
+    COMPLIANCE -->|Analytics| ANALYTICS[Analytics Agent]
+    COMPLIANCE -->|Optimize| OPTIMIZER[Optimization Agent]
+
+    CONTENT --> POLICY[Policy Validator]
+    POLICY -->|Valid| PLATFORM[Platform Dispatch]
+    POLICY -->|Invalid| RESPOND
+
+    PLATFORM --> RESPOND
+    ANALYTICS --> RESPOND
+    OPTIMIZER --> RESPOND
+    RESPOND --> OUTPUT([API Response / CLI Output])
+
+    subgraph Safety Layer
+        SAFETY[Safety Module<br/>Max depth · Loop detection · Timeout]
+    end
+
+    subgraph Financial Risk Engine
+        CAPS[3-Tier Spend Caps]
+        ANOMALY[Anomaly Detection<br/>Z-score · IQR]
+        VELOCITY[Velocity Monitor]
+        KILL[Kill Switch]
+    end
+
+    subgraph Cross-Platform Intelligence
+        ROI[ROI Normalization]
+        MARGINAL[Marginal Returns]
+        BUDGET[Budget Allocator]
+        SATURATION[Saturation Detection]
+    end
+
+    PLATFORM -.-> CAPS
+    PLATFORM -.-> ANOMALY
+    OPTIMIZER -.-> ROI
+    OPTIMIZER -.-> BUDGET
+```
+
+## Financial Risk Containment
+
+This is the feature that SaaS tools don't have. OrchestraAI treats your ad spend
+like a financial system, not a suggestion box.
+
+**3-Tier Spend Caps** -- Daily, weekly, and monthly hard limits per campaign and
+per tenant. Breaching any tier halts spend immediately.
+
+**Anomaly Detection** -- Z-score and IQR-based statistical detection catches
+unusual spend patterns before they drain budgets. Configurable thresholds.
+
+**Velocity Monitoring** -- Tracks spend-per-minute velocity against baselines.
+Detects sudden spikes that point to misconfigured bids or bot traffic.
+
+**Kill Switch** -- Instant emergency halt across all platforms. One command stops
+everything. Logged, auditable, reversible.
+
+## Guardrailed Bidding
+
+A 3-phase autonomy model that earns trust over time:
+
+| Phase | Behavior | Human Involvement |
+|---|---|---|
+| **Hard Guardrail** | All bids require explicit approval | Every action reviewed |
+| **Semi-Autonomous** | AI recommends, auto-executes within bounds | Review exceptions only |
+| **Controlled Autonomous** | Full AI control within strict guardrails | Monitor dashboards |
+
+Each phase has its own spend limits, approval thresholds, and escalation rules.
+Promotion between phases requires demonstrated performance and explicit opt-in.
 
 ## Platform Support
 
-| Platform | Status | API Access |
-|----------|--------|-----------|
-| X/Twitter | Full | Paid ($100/mo Basic) |
-| YouTube | Full | Free (Google Cloud project) |
-| Pinterest | Stub | Free, easy approval |
-| TikTok | Stub | Developer portal |
-| Facebook | Stub | Meta business verification |
-| Instagram | Stub | Meta business verification |
-| LinkedIn | Stub | Partner approval |
-| Snapchat | Stub | Marketing API approval |
-| Google Ads | Stub | Developer token |
+All 9 connectors make real HTTP calls to production APIs with OAuth 2.0,
+retry logic (exponential backoff, 3 attempts), and rate limit handling.
 
-## Project Structure
+| Platform | OAuth | Publish | Analytics | Audience |
+|---|:---:|:---:|:---:|:---:|
+| **Twitter** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **YouTube** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **TikTok** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Pinterest** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Facebook** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Instagram** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **LinkedIn** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Snapchat** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Google Ads** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+
+## CLI Reference
+
+OrchestraAI is **CLI-first**. Everything you can do through the API, you can do
+from your terminal.
 
 ```
-src/orchestra/
-├── api/           # FastAPI routes + middleware (auth, audit, rate limit)
-├── agents/        # LangGraph orchestrator + 6 specialized agents + tools
-├── bidding/       # 3-phase guardrailed bidding engine
-├── cli/           # Typer CLI (campaign, connect, optimize, report)
-├── compliance/    # Platform ToS rules, content validation, restrictions
-├── core/          # Event bus, scheduler, cost router, exceptions
-├── db/            # SQLAlchemy models, Alembic migrations
-├── intelligence/  # Cross-platform ROI, attribution, budget allocation
-├── moat/          # Data flywheel, signals, performance embeddings
-├── platforms/     # 9 platform connectors (abstract base + implementations)
-├── rag/           # Qdrant store, embeddings, retriever, agent memory
-├── risk/          # Spend caps, anomaly detection, alerts, rollback
-└── security/      # RBAC, GDPR/CCPA, encryption, audit trail
-docs/
-├── architecture.md
-├── cost-analysis.md
-├── data-moat.md
-├── differentiation.md
-├── due-diligence.md
-├── guardrailed-bidding.md
-├── launch-strategy.md
-├── security-compliance.md
-├── user-procedures.md
-└── viral-strategy.md
+orchestra auth register       Register a new account
+orchestra auth login          Authenticate (email/password or API key)
+orchestra auth logout         Clear stored credentials
+orchestra auth whoami         Show current user info
+
+orchestra campaign list       List all campaigns
+orchestra campaign create     Create a new campaign (interactive)
+orchestra campaign get <id>   Show campaign details
+orchestra campaign launch <id>  Launch a campaign
+orchestra campaign pause <id>   Pause a campaign
+
+orchestra ask "<prompt>"      Natural-language instruction to the AI orchestrator
+orchestra analytics           Cross-platform analytics overview
+orchestra status              Health check all infrastructure services
+orchestra config              Show CLI configuration
+orchestra version             Show version
 ```
 
-## API Endpoints
+## Tech Stack
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Liveness probe |
-| `/ready` | GET | Readiness probe (checks DB) |
-| `/api/v1/auth/register` | POST | Register user + tenant |
-| `/api/v1/auth/login` | POST | Authenticate, get JWT |
-| `/api/v1/orchestrator` | POST | Run AI agent orchestration |
-| `/api/v1/platforms/connections` | GET | List connected platforms |
-| `/api/v1/platforms/auth/init` | POST | Start OAuth flow |
-| `/api/v1/gdpr/export` | POST | Request data export |
-| `/api/v1/gdpr/delete` | POST | Request data deletion |
-| `/api/v1/audit` | GET | Query audit log |
-| `/api/v1/kill-switch/activate` | POST | Emergency spend halt |
+| Layer | Technology |
+|---|---|
+| API | FastAPI, Uvicorn, Pydantic |
+| Agents | LangGraph, LangChain, OpenAI / Anthropic / Ollama |
+| Vector DB | Qdrant (RAG, campaign memory, data moat) |
+| Database | PostgreSQL 16, SQLAlchemy 2.0, Alembic |
+| Cache / Events | Redis 7, Apache Kafka |
+| CLI | Typer, Rich |
+| Security | JWT (python-jose), bcrypt, Fernet encryption |
+| Infra | Docker Compose (app + postgres + redis + qdrant + kafka + ollama) |
 
-## Safety & Guardrails
+## Video Pipeline
 
-- **14 hard-coded restrictions** that cannot be overridden by any agent or configuration
-- **3-tier spend caps**: global, per-platform, per-campaign
-- **Anomaly detection**: Z-score + IQR on spend patterns
-- **Kill switch**: Global + per-tenant, instant halt
-- **Content validation**: Risk scoring 0-100, human review mode
-- **Compliance engine**: Machine-readable ToS for all 9 platforms
-- **Full audit trail**: Every action logged with reasoning and outcome
+Tiered cost routing for video content generation:
+
+| Tier | Models | Cost | Use Case |
+|---|---|---|---|
+| **Draft** | Runway, Kling | ~$0.05/min | Rapid iteration, internal review |
+| **Upscale** | Sora, Veo | ~$0.50/min | Final production, client-facing |
+| **BYOK** | Bring Your Own Key | $0 | Use your existing API keys |
 
 ## Documentation
 
-See the [`docs/`](docs/) folder for detailed documentation:
+- [Architecture Guide](docs/architecture.md)
+- [Guardrailed Bidding](docs/guardrailed_bidding.md)
+- [Security & Compliance](docs/security_compliance.md)
+- [Data Moat Strategy](docs/data_moat.md)
+- [Cost Analysis](docs/cost_analysis.md)
+- [Launch Strategy](docs/launch_strategy.md)
 
-- [Architecture](docs/architecture.md)
-- [User Procedures](docs/user-procedures.md)
-- [Security & Compliance](docs/security-compliance.md)
-- [Guardrailed Bidding](docs/guardrailed-bidding.md)
-- [Data Moat](docs/data-moat.md)
-- [Cost Analysis](docs/cost-analysis.md)
-- [Differentiation](docs/differentiation.md)
+## Self-Hosting
+
+```bash
+# Full stack with one command
+docker compose up -d
+
+# Services started:
+#   app       → localhost:8000  (API + Dashboard)
+#   postgres  → localhost:5432  (PostgreSQL 16)
+#   redis     → localhost:6379  (Cache + Events)
+#   qdrant    → localhost:6333  (Vector DB)
+#   kafka     → localhost:9092  (Event Bus)
+#   ollama    → localhost:11434 (Local LLM)
+```
+
+Your data never leaves your infrastructure. No telemetry. No phone-home.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code standards,
+and PR guidelines.
+
+```bash
+# Quick dev setup
+git clone https://github.com/orchestraai/orchestraai.git
+cd orchestraai
+pip install -e ".[dev]"
+docker compose up -d
+pytest
+```
 
 ## License
 
-Apache License 2.0 -- see [LICENSE](LICENSE) for details.
-
-Open-core model: Community edition is full-featured. Enterprise adds SSO, advanced analytics, and SLA.
+[Apache License 2.0](LICENSE) -- use it commercially, modify it, distribute it.
+Just include the license and state your changes.
 
 ---
 
-*Built with LangGraph, FastAPI, and a belief that marketing AI should be transparent, guardrailed, and open.*
+<p align="center">
+  Built for marketers who care about where their money goes.<br>
+  <strong>OrchestraAI</strong> -- orchestrate everything, overspend nothing.
+</p>

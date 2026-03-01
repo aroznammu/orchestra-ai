@@ -1,23 +1,36 @@
-## What
+## Summary
 
-Brief description of the change.
+Brief description of what this PR does and why.
 
-## Why
+## Type
 
-Motivation and context.
+- [ ] Feature (new functionality)
+- [ ] Fix (bug fix)
+- [ ] Docs (documentation only)
+- [ ] Refactor (code improvement, no behavior change)
+- [ ] Test (adding or updating tests)
+- [ ] Chore (dependencies, CI, config)
 
-## How
+## Changes
 
-Implementation approach.
+-
+-
+-
 
 ## Testing
 
-How you tested the changes.
+Describe how you tested these changes:
+
+- [ ] New tests added
+- [ ] Existing tests updated
+- [ ] Manual testing performed (describe below)
 
 ## Checklist
 
-- [ ] Linting passes (`make lint`)
-- [ ] Tests pass (`make test`)
+- [ ] `ruff check src/` passes with no errors
+- [ ] `ruff format --check src/` passes
+- [ ] `pytest` passes (273+ tests)
 - [ ] Documentation updated (if applicable)
 - [ ] No hardcoded secrets or credentials
-- [ ] No changes to restricted files without owner review
+- [ ] Tenant isolation maintained for any new queries
+- [ ] No breaking changes to the CLI or API (or migration path documented)

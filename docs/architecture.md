@@ -1,143 +1,253 @@
-# OrchestraAI -- Architecture
+# OrchestraAI Architecture
 
-> AI-Native Marketing Orchestration Platform
+## Executive Overview
 
-## System Overview
+OrchestraAI is a multi-tenant, AI-native marketing orchestration platform built on Python 3.12+, FastAPI, and LangGraph. It unifies campaign creation, cross-platform publishing, analytics aggregation, and budget optimization behind a single LangGraph agent graph. Nine platform connectors (Twitter, YouTube, TikTok, Pinterest, Facebook, Instagram, LinkedIn, Snapchat, Google Ads) make real HTTP calls to production APIs with OAuth2 authentication, retry logic, and rate-limit detection. Financial risk controls enforce 3-tier spend caps, anomaly detection, and a kill switch. A Qdrant-backed RAG layer and data moat engine drive a compounding intelligence flywheel.
 
-OrchestraAI is a multi-agent AI system that orchestrates marketing campaigns across 9 social and search platforms. It uses LangGraph for stateful agent workflows, Qdrant for vector-based knowledge retrieval, and a guardrailed bidding engine for financially bounded automation.
+The system runs as a Docker Compose stack of six services and exposes both a FastAPI REST API (`src/orchestra/main.py`) and a Typer+Rich CLI (`src/orchestra/cli/app.py`).
 
-## Tech Stack
+---
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| API | FastAPI + Uvicorn | Async REST API, ORJSONResponse |
-| Agents | LangGraph + LangChain | Multi-agent orchestration, tool calling |
-| Vector DB | Qdrant | Embeddings, RAG, performance retrieval |
-| Relational DB | PostgreSQL 16 | Users, campaigns, audit logs |
-| Cache / Bus | Redis 7 (Streams) | Caching, real-time event bus |
-| Durable Bus | Apache Kafka 3.8 (KRaft) | Durable events, financial audit |
-| Local LLM | Ollama | Self-hosted model serving |
-| ORM | SQLAlchemy 2.0 (async) | Database abstraction |
-| Migrations | Alembic | Schema versioning |
-| CLI | Typer | Developer/operator interface |
-| Validation | Pydantic v2 | Data contracts, settings |
-| HTTP Client | httpx | Async platform API calls |
-| Encryption | cryptography (Fernet) | Token encryption at rest |
-| Scheduling | APScheduler | Campaign scheduling |
-| Logging | structlog | Structured JSON logging |
+## System Architecture
 
-## Execution Graph
+```mermaid
+graph TB
+    subgraph Clients
+        CLI[Typer CLI<br/>orchestra auth/campaign/ask]
+        API[REST API<br/>FastAPI + ORJSONResponse]
+    end
 
-```
-User Request (API / CLI)
-        |
-   [Orchestrator]
-        |
-   classify_intent
-        |
-   compliance_gate  <-- FIRST GATE (always runs)
-        |
-   route_after_compliance
-      /    |    \
-content  analytics  optimize
-      \    |    /
-       respond
-        |
-   Return Result
-```
+    subgraph Middleware Pipeline
+        CORS[CORSMiddleware]
+        AUTH_CTX[AuthContextMiddleware<br/>src/orchestra/api/middleware/auth_context.py]
+        AUDIT[AuditLogMiddleware<br/>src/orchestra/api/middleware/audit.py]
+        RATE[RateLimitMiddleware<br/>src/orchestra/api/middleware/rate_limit.py]
+    end
 
-### Agent Roles
+    subgraph Core Services
+        ORCH[LangGraph Orchestrator<br/>8-node StateGraph]
+        BIDDING[Bidding Engine<br/>3-phase autonomy]
+        COST[Cost Router<br/>SIMPLE/MODERATE/COMPLEX]
+        SCHED[APScheduler<br/>daily/monthly/hourly jobs]
+    end
 
-1. **Orchestrator** -- LangGraph state machine, routes intent through agent graph
-2. **Compliance Agent** -- Validates content/actions against ToS and internal policies
-3. **Policy Agent** -- Per-platform content rules validation
-4. **Content Agent** -- Multi-variant content generation with LLM
-5. **Optimizer Agent** -- Thompson Sampling for A/B testing, Bayesian budget allocation
-6. **Analytics Agent** -- Cross-platform metric aggregation and insights
-7. **Platform Agent** -- Dispatches actions to platform connectors
+    subgraph Intelligence
+        INTEL[Cross-Platform Intelligence<br/>ROI · Marginal Returns · Attribution]
+        MOAT[Data Moat Engine<br/>Flywheel · Signals · Models]
+        RAG[RAG Layer<br/>Qdrant · Embeddings · Retriever]
+    end
 
-### Safety System
+    subgraph Platform Connectors
+        TW[Twitter v2] & YT[YouTube v3] & TK[TikTok v2]
+        PI[Pinterest v5] & FB[Facebook Graph v19] & IG[Instagram Graph v19]
+        LI[LinkedIn v2] & SC[Snapchat Marketing v1] & GA[Google Ads v16]
+    end
 
-Every agent transition passes through safety checks:
-- **Max depth**: 10 (prevents infinite recursion)
-- **Max calls per trace**: 50 (prevents runaway loops)
-- **Self-call detection**: >3 calls to same agent triggers error
-- **Trace timeout**: 120 seconds
+    subgraph Infrastructure
+        PG[(PostgreSQL 16)]
+        RD[(Redis 7)]
+        QD[(Qdrant v1.13)]
+        KF[(Kafka 3.8)]
+        OL[(Ollama)]
+    end
 
-## Data Flow
+    CLI -->|httpx| API
+    API --> CORS --> AUTH_CTX --> AUDIT --> RATE
 
-```
-Platform APIs --> Connectors --> EventBus --> Agents --> Vector Store
-                                   |                       |
-                               PostgreSQL              Qdrant
-                              (structured)           (embeddings)
-                                   |
-                                 Redis
-                               (cache)
+    RATE --> ORCH
+    ORCH --> BIDDING
+    ORCH --> COST
+    ORCH --> INTEL
+    ORCH --> MOAT
+    ORCH --> RAG
+    ORCH --> TW & YT & TK & PI & FB & IG & LI & SC & GA
+
+    SCHED --> BIDDING
+
+    MOAT --> QD
+    RAG --> QD
+    ORCH --> PG
+    AUDIT --> PG
+    RATE --> RD
+    COST --> OL
 ```
 
-### Event Bus (Hybrid)
+---
 
-- **Redis Streams**: Real-time events (analytics updates, status changes)
-- **Kafka**: Durable events (financial transactions, audit entries)
-- Auto-routing based on event type
+## LangGraph Agent Execution Graph
 
-## Multi-Tenant Architecture
+The orchestrator (`src/orchestra/agents/orchestrator.py`) is a compiled `langgraph.graph.StateGraph` with 8 nodes and conditional routing:
 
-Every data access is scoped by `tenant_id`:
-- PostgreSQL: `tenant_id` column on every table, enforced in queries
-- Qdrant: Payload filter on `tenant_id` for every search
-- Redis: Key prefixing with `tenant:{id}:`
-- Agent memory: Per-tenant `AgentMemory` instances
+```mermaid
+stateDiagram-v2
+    [*] --> classify
+    classify --> compliance_gate
+
+    compliance_gate --> content_node : intent ∈ {publish, schedule, create_campaign}
+    compliance_gate --> analytics_node : intent ∈ {get_analytics, generate_report}
+    compliance_gate --> optimize_node : intent ∈ {optimize, reallocate_budget}
+    compliance_gate --> respond : blocked or check_compliance
+
+    content_node --> policy_node
+    policy_node --> platform_node : valid & (publish | schedule)
+    policy_node --> respond : invalid or create_campaign
+
+    platform_node --> respond
+    analytics_node --> respond
+    optimize_node --> respond
+    respond --> [*]
+```
+
+### Node Responsibilities
+
+| Node | Function | Module |
+|------|----------|--------|
+| `classify` | LLM-based intent classification (OpenAI → Anthropic → Ollama) with keyword fallback and in-memory LRU cache (256 entries) | `orchestrator.py:classify_intent` |
+| `compliance_gate` | Pre-action compliance check: prohibited content, targeting rules, budget validation | `compliance.py:run_compliance_check` |
+| `content_node` | LLM content generation via OpenAI/Anthropic/Ollama fallback chain | `content.py:generate_content` |
+| `policy_node` | Platform-specific policy validation: character limits, hashtag rules, media constraints | `policy.py:validate_content_policy` |
+| `platform_node` | Dispatch publish/schedule action to the appropriate platform connector | `platform_agent.py:execute_platform_action` |
+| `analytics_node` | Cross-platform metrics aggregation with real connector calls and benchmark comparison | `analytics_agent.py:run_analytics` |
+| `optimize_node` | Campaign optimization via Thompson Sampling, UCB, and Bayesian budget allocation | `optimizer.py:run_optimization` |
+| `respond` | Build final response from agent results, clean up execution trace | `orchestrator.py:respond` |
+
+Safety module (`agents/safety.py`) enforces: max depth (10), max calls per trace (50), same-agent loop detection (>3 consecutive), and timeout (120s).
+
+---
+
+## Platform Connector Layer
+
+All 9 connectors inherit from a shared base (`src/orchestra/platforms/base.py`) and implement:
+
+| Connector | API | Publish | Analytics | Audience |
+|-----------|-----|---------|-----------|----------|
+| Twitter | Twitter API v2 | Tweet creation | Public/non-public metrics | Follower counts |
+| YouTube | YouTube Data API v3 | Resumable video upload | View/like/comment counts | Subscriber counts |
+| TikTok | TikTok API v2 | Video publish (pull-from-URL) | Like/comment/share/view | Follower/following |
+| Pinterest | Pinterest API v5 | Pin creation with board | 30-day impressions/clicks/saves | Follower/pin counts |
+| Facebook | Meta Graph API v19.0 | Page posts + scheduling | Post insights | Page follower data |
+| Instagram | Instagram Graph API v19.0 | Container-based upload | Impressions/reach/saves | Demographics |
+| LinkedIn | LinkedIn API v2 | UGC posts with articles | Social actions | OIDC profile |
+| Snapchat | Snapchat Marketing API v1 | Snap Ad creative creation | Impressions/swipes/video views | Org metadata |
+| Google Ads | Google Ads API v16 | Responsive Search Ad creation | GAQL campaign queries | Customer info |
+
+Shared traits: `tenacity` retry (3 attempts, 2-30s exponential backoff), 429 rate-limit detection with Retry-After, content validation against platform limits, `structlog` structured logging, `httpx.AsyncClient` for all HTTP calls, Fernet-encrypted OAuth tokens at rest.
+
+---
+
+## Database Schema
+
+Ten SQLAlchemy models defined in `src/orchestra/db/models.py`, all with PostgreSQL UUID primary keys:
+
+| Model | Table | Key Fields | Relationships |
+|-------|-------|-----------|---------------|
+| `Tenant` | `tenants` | name, slug, bidding_phase, daily/monthly_spend_cap, settings | → users, campaigns, platform_connections |
+| `User` | `users` | email, hashed_password, full_name, role (OWNER/ADMIN/MEMBER/VIEWER) | → tenant |
+| `PlatformConnection` | `platform_connections` | platform, access_token_encrypted, refresh_token_encrypted, token_expires_at | → tenant |
+| `Campaign` | `campaigns` | name, status (DRAFT→ACTIVE→PAUSED→COMPLETED), platforms, budget, spent | → tenant, posts, experiments |
+| `CampaignPost` | `campaign_posts` | platform, content, hashtags, media_urls, scheduled_at, platform_post_id | → campaign |
+| `AuditLog` | `audit_logs` | action, resource_type, resource_id, details, ip_address, user_agent | indexed by tenant+action |
+| `Experiment` | `experiments` | name, hypothesis, variants, status, winner_variant, confidence_level | → campaign |
+| `KillSwitchEventLog` | `kill_switch_events` | tenant_id, action, triggered_by, reason, affected_platforms/campaigns | standalone |
+| `SpendRecord` | `spend_records` | campaign_id, platform, amount, currency, action, was_anomalous | → tenant, campaign |
+| `APIKey` | `api_keys` | name, key_hash (SHA-256), role, is_active, expires_at, last_used_at | → tenant, user |
+
+Session management (`src/orchestra/db/session.py`): Async engine with `pool_size=20`, `max_overflow=10`, `pool_pre_ping=True`. Alembic migrations run automatically on startup when PostgreSQL is available.
+
+---
+
+## Security Architecture
+
+### Middleware Pipeline
+
+Execution order in `src/orchestra/main.py` (last added = first executed):
+
+```
+Request → CORS → AuthContextMiddleware → AuditLogMiddleware → RateLimitMiddleware → Route Handler
+```
+
+1. **AuthContextMiddleware** (`api/middleware/auth_context.py`): Extracts Bearer token or X-API-Key from headers, decodes via `jose.jwt`, sets `request.state.user` as a `TokenPayload(sub, tenant_id, role, exp)`. Never rejects -- public endpoints pass through.
+
+2. **AuditLogMiddleware** (`api/middleware/audit.py`): Reads `request.state.user` to log `user_id`, `tenant_id`, action, resource, IP address, and user agent to the `audit_logs` table via fire-and-forget async write.
+
+3. **RateLimitMiddleware** (`api/middleware/rate_limit.py`): Tenant-based rate limiting (configurable `requests_per_minute`) with Redis-backed counters. Falls back to IP-based limiting for unauthenticated requests.
+
+### Dual Auth Mechanism
+
+- **JWT Bearer tokens**: Created by `create_access_token()` with HS256 signing, bcrypt-hashed passwords, configurable expiry.
+- **API keys**: SHA-256 hashed, stored in `api_keys` table, looked up via `_resolve_api_key()`. Falls back to treating the key as a JWT for backward compatibility.
+- **RBAC**: `require_role(*allowed_roles)` FastAPI dependency enforces role-based access (OWNER, ADMIN, MEMBER, VIEWER).
+
+### Encryption at Rest
+
+- OAuth access and refresh tokens encrypted via `cryptography.fernet.Fernet` (AES-128-CBC + HMAC-SHA256) in `src/orchestra/security/encryption.py`.
+- Encryption key sourced from `FERNET_KEY` environment variable.
+
+---
 
 ## Cost-Aware Model Routing
 
-```
-Task Complexity     Model Selection
-─────────────────   ──────────────────────────
-SIMPLE              GPT-4o-mini / Ollama local
-MODERATE            GPT-4o / Claude Haiku
-COMPLEX             Claude Sonnet / GPT-4o
-```
+### Text Tiers (`src/orchestra/core/cost_router.py`)
 
-Fallback chain: Cloud -> Self-hosted -> Error
+The `route_model(complexity, prefer_local)` function selects models by `TaskComplexity`:
+
+| Complexity | Primary | Fallback | Use Case |
+|-----------|---------|----------|----------|
+| `SIMPLE` | OpenAI `gpt-4o-mini` | Ollama (local) | Intent classification, simple Q&A |
+| `MODERATE` | OpenAI `gpt-4o-mini` | Anthropic → Ollama | Content generation, analytics insights |
+| `COMPLEX` | Anthropic `claude-3.5-sonnet` | OpenAI → Ollama | Strategy, multi-step reasoning |
+
+### Tiered Video Pipeline
+
+The `route_video()` function implements 3 tiers:
+
+| Tier | Primary Model | Fallback | Cost/min | Trigger |
+|------|--------------|----------|----------|---------|
+| `DRAFT` | Runway Gen-3 Alpha Turbo | Kling v1 | $0.05 | Default for all new content |
+| `UPSCALE` | Sora v1 | Veo v2 | $0.50 | Validated A/B test winners only |
+| `BYOK` | Tenant-provided | — | $0.00 | Tenant supplies own API key |
+
+---
 
 ## Failure Recovery
 
-| Failure Mode | Recovery Strategy |
-|-------------|-------------------|
-| LLM timeout | Fallback to next tier, then local model |
-| Platform API error | Exponential backoff (tenacity), max 3 retries |
-| Database connection | Connection pool with health checks |
-| Qdrant unavailable | Graceful degradation (skip RAG, use defaults) |
-| Kafka down | Redis Streams as fallback for durable events |
-| Budget exceeded | Immediate halt, alert, rollback recent changes |
-| Agent loop | Safety system kills trace, logs error |
-| Kill switch | All spend operations halt immediately |
+### Retry with Tenacity
 
-## Token Optimization
+All platform connectors use `@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=30))` from the `tenacity` library. Rate-limited responses (HTTP 429) are detected and the Retry-After header is respected.
 
-- **Embedding reuse**: Campaign embeddings cached, re-embedded only on metric updates
-- **Prompt compression**: Platform style guides pre-built, not regenerated per request
-- **Model routing**: Simple tasks use cheap models (GPT-4o-mini: $0.15/1M tokens)
-- **Local fallback**: Ollama for development and cost-sensitive deployments
-- **Batch embedding**: Multiple texts embedded in single API call
+### Graceful Degradation
 
-## Directory Structure
+- **LLM fallback chain**: OpenAI → Anthropic → Ollama (local) → keyword-based fallback. Every LLM call site implements this cascade.
+- **Embedding fallback**: OpenAI `text-embedding-3-small` → Ollama `nomic-embed-text` → deterministic hash-based embedding for testing environments.
+- **Database unavailability**: API endpoints return 503 Service Unavailable; RAG operations fall back to in-memory caching.
 
-```
-src/orchestra/
-├── api/           # FastAPI routes + middleware
-├── agents/        # LangGraph orchestrator + 6 specialized agents
-├── bidding/       # Guardrailed bidding engine
-├── cli/           # Typer CLI
-├── compliance/    # Platform ToS rules, content validation
-├── core/          # Event bus, scheduler, cost router, exceptions
-├── db/            # SQLAlchemy models, Alembic migrations
-├── intelligence/  # Cross-platform ROI, attribution, allocation
-├── moat/          # Data flywheel, signals, performance embedding
-├── platforms/     # 9 platform connectors (2 full, 7 stubbed)
-├── rag/           # Qdrant store, embeddings, retriever, memory
-├── risk/          # Spend caps, anomaly detection, alerts, rollback
-└── security/      # RBAC, GDPR, encryption, audit trail
-```
+### Kill Switch
+
+`BiddingEngine.activate_kill_switch()` in `src/orchestra/bidding/engine.py` immediately halts all spend operations by raising `BudgetExceededError` for any `evaluate_action()` call. Deactivation requires explicit manual action. Events are persisted to `KillSwitchEventLog` and exposed via the `/api/v1/kill-switch` route.
+
+---
+
+## Infrastructure
+
+### Docker Compose Stack (`docker-compose.yml`)
+
+| Service | Image | Ports | Purpose |
+|---------|-------|-------|---------|
+| `app` | Custom Dockerfile (multi-stage) | 8000 | FastAPI application |
+| `postgres` | `postgres:16-alpine` | 5432 | Primary data store |
+| `redis` | `redis:7-alpine` | 6379 | Caching, rate limiting, session store |
+| `qdrant` | `qdrant/qdrant:v1.13.2` | 6333, 6334 | Vector database for RAG + data moat |
+| `kafka` | `apache/kafka:3.8.1` | 9092 | Event streaming (campaign events, signals) |
+| `ollama` | `ollama/ollama:latest` | 11434 | Local LLM inference |
+
+Health checks: PostgreSQL (`pg_isready`), Redis (`redis-cli ping`), Kafka (broker API versions). All services connected via `orchestra-net` bridge network. Persistent volumes for all stateful services.
+
+### Scheduler (`src/orchestra/core/scheduler.py`)
+
+Three registered APScheduler background jobs:
+
+| Job | Trigger | Purpose |
+|-----|---------|---------|
+| `reset_daily_spend` | CronTrigger: midnight UTC | Reset daily spend caps for all tenants |
+| `reset_monthly_spend` | CronTrigger: 1st of month, 00:05 UTC | Reset monthly spend counters |
+| `update_velocity_baselines` | IntervalTrigger: every 1 hour | Update spend velocity baselines for anomaly detection |

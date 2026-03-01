@@ -1,157 +1,199 @@
 # Contributing to OrchestraAI
 
-Thank you for your interest in contributing! This guide will help you get started.
+Thanks for your interest in contributing. This guide covers everything you need
+to get a development environment running and submit a pull request.
+
+## Getting Started
+
+```bash
+# 1. Fork the repo on GitHub, then clone your fork
+git clone https://github.com/<your-username>/orchestraai.git
+cd orchestraai
+
+# 2. Install in editable mode with dev dependencies
+pip install -e ".[dev]"
+
+# 3. Install pre-commit hooks
+pre-commit install
+```
 
 ## Development Setup
 
-### Prerequisites
+### Infrastructure
 
-- Python 3.12+
-- Docker & Docker Compose
-- Poetry (`pip install poetry`)
-
-### Setup
+OrchestraAI depends on PostgreSQL, Redis, Qdrant, Kafka, and (optionally)
+Ollama. The easiest way to run them is Docker Compose:
 
 ```bash
-# Clone the repo
-git clone <repository-url>
-cd orchestra-ai
-
-# Copy environment config
-cp .env.example .env
-
-# Start infrastructure
 docker compose up -d
+```
 
-# Install dependencies (including dev tools)
-poetry install
+This starts:
 
-# Run migrations
-poetry run alembic upgrade head
+| Service | Port | Purpose |
+|---|---|---|
+| PostgreSQL 16 | 5432 | Primary database |
+| Redis 7 | 6379 | Cache, rate limiting, events |
+| Qdrant | 6333 | Vector DB for RAG |
+| Kafka | 9092 | Event bus |
+| Ollama | 11434 | Local LLM (optional) |
 
-# Verify everything works
-poetry run pytest
+### Environment Variables
+
+Copy the example and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+At minimum, set `JWT_SECRET_KEY` and `FERNET_KEY`. Platform API keys are only
+needed if you're working on specific connectors.
+
+### Running the API
+
+```bash
+uvicorn orchestra.main:app --reload --port 8000
+```
+
+### Using the CLI
+
+```bash
+orchestra status          # Check infrastructure health
+orchestra auth register   # Create a test account
+orchestra ask "hello"     # Test the orchestrator
 ```
 
 ## Code Style
 
-We use **Ruff** for linting and formatting, **Mypy** for type checking.
+We use **Ruff** for linting and formatting, configured in `pyproject.toml`:
 
 ```bash
 # Lint
-poetry run ruff check src/
+ruff check src/
+
+# Auto-fix
+ruff check src/ --fix
 
 # Format
-poetry run ruff format src/
+ruff format src/
 
-# Type check
-poetry run mypy src/orchestra/
+# Type checking (strict mode)
+mypy src/orchestra/ --ignore-missing-imports
 ```
 
-### Style Guidelines
+Key Ruff settings (from `pyproject.toml`):
 
-- **Type hints**: Required on all public functions
-- **Docstrings**: Required on modules and public classes/functions
-- **Pydantic models**: Use for all data contracts
-- **Async**: Use async/await for all I/O operations
-- **Logging**: Use `structlog` with contextual fields
-- **Secrets**: Always use `SecretStr` or env vars, never hardcode
+- **Target:** Python 3.12
+- **Line length:** 120
+- **Rules:** E, F, W, I, N, UP, S, B, A, C4, PT, RET, SIM
+- **Ignored:** S101 (assert in tests), S104 (bind to all interfaces)
+- **isort:** `orchestra` as first-party
 
-## Making Changes
+## Testing
+
+```bash
+# Run the full suite
+pytest
+
+# With verbose output
+pytest -v --tb=short
+
+# Run a specific test file
+pytest tests/test_orchestrator.py
+
+# Run with coverage
+pytest --cov=orchestra --cov-report=html
+```
+
+The test suite has **273+ tests** using `pytest-asyncio` with `asyncio_mode = auto`.
+All async test functions are automatically detected -- no need for
+`@pytest.mark.asyncio`.
+
+### Writing Tests
+
+- Place tests in `tests/` with the `test_` prefix
+- Use `pytest-asyncio` for async tests (mode is `auto`)
+- Use `httpx.AsyncClient` with FastAPI's `TestClient` for API tests
+- Mock external services (platform APIs, LLM providers) -- never make real HTTP calls in tests
+- Use `faker` for generating test data
+
+## PR Process
 
 ### Branch Naming
 
 ```
 feature/short-description
-fix/short-description
-docs/short-description
+fix/issue-number-description
+docs/what-changed
+refactor/what-changed
 ```
 
 ### Commit Messages
 
-Use conventional commits:
+Use clear, imperative-mood messages:
 
 ```
-feat: add Pinterest full connector
-fix: handle rate limit on Twitter analytics
-docs: update deployment guide
-refactor: extract common OAuth logic
-test: add compliance agent unit tests
+Add Twitter analytics endpoint
+Fix spend cap reset not triggering on schedule
+Update RAG pipeline to support multi-tenant isolation
 ```
 
-### Pull Request Process
+### Submitting a PR
 
-1. Create a feature branch from `main`
+1. Create a branch from `main`
 2. Make your changes
-3. Ensure linting passes (`make lint`)
-4. Ensure tests pass (`make test`)
-5. Update documentation if needed
-6. Submit a PR with a clear description
+3. Ensure all checks pass: `ruff check src/ && pytest`
+4. Push your branch and open a PR against `main`
+5. Fill out the PR template (summary, type, testing, checklist)
+6. Wait for CI to pass and a maintainer to review
 
-### PR Template
+### What We Look For
 
-```markdown
-## What
+- Tests for new functionality
+- No regressions in existing tests
+- Clean Ruff output (no lint errors)
+- Docstrings for public functions
+- No hardcoded secrets or credentials
+- Tenant isolation maintained (multi-tenant queries must filter by `tenant_id`)
 
-Brief description of the change.
+## Architecture Overview
 
-## Why
+The project follows this structure:
 
-Motivation and context.
-
-## How
-
-Implementation approach.
-
-## Testing
-
-How you tested the changes.
-
-## Checklist
-
-- [ ] Linting passes
-- [ ] Tests pass
-- [ ] Documentation updated (if needed)
-- [ ] No hardcoded secrets
+```
+src/orchestra/
+├── agents/          # LangGraph orchestrator, content, analytics, optimizer agents
+├── api/             # FastAPI routes and middleware
+├── bidding/         # 3-phase guardrailed bidding engine
+├── cli/             # Typer CLI (orchestra command)
+├── compliance/      # ToS rules, content validation, rate limiting
+├── core/            # Cost router, scheduler, exceptions
+├── db/              # SQLAlchemy models, session, migrations
+├── intelligence/    # Cross-platform ROI, budget allocation, attribution
+├── platforms/       # 9 platform connectors (Twitter, YouTube, etc.)
+├── rag/             # Qdrant RAG pipeline, embeddings, retriever
+├── risk/            # Spend caps, anomaly detection, velocity, kill switch
+├── security/        # Encryption, GDPR, OAuth token management
+└── main.py          # FastAPI app entry point
 ```
 
-## Adding a Platform Connector
-
-Platform connectors are the most common contribution. Here's how:
-
-1. Create `src/orchestra/platforms/<platform_name>.py`
-2. Implement the `PlatformBase` abstract interface (9 methods)
-3. Add platform limits in the connector
-4. Register in `src/orchestra/platforms/__init__.py`
-5. Add ToS rules in `src/orchestra/compliance/tos_rules.py`
-6. Update documentation
-
-See `platforms/twitter.py` (full implementation) or `platforms/pinterest.py` (stub) as examples.
-
-## Architecture Decisions
-
-Before making significant architectural changes, please open an issue to discuss:
-
-- New dependencies
-- Database schema changes
-- API contract changes
-- Agent workflow modifications
-- Security-related changes
-
-## Restricted Changes
-
-The following cannot be modified without owner review:
-
-- `compliance/restrictions.py` -- The 14 NEVER-do rules
-- `bidding/kill_switch.py` -- Kill switch logic
-- `security/encryption.py` -- Token encryption
-- `risk/spend_caps.py` -- Absolute spend limits
-
-## Getting Help
-
-- Open an issue for bugs or feature requests
-- Use discussions for questions and ideas
+For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md).
 
 ## Code of Conduct
 
-Be respectful, constructive, and inclusive. We're building something meaningful together.
+Be respectful. Be constructive. Assume good intent.
+
+- Treat all contributors with respect regardless of experience level
+- Provide actionable feedback in code reviews
+- No harassment, discrimination, or personal attacks
+- Focus on the code, not the person
+- If something is unclear, ask -- don't assume
+
+Violations can be reported to hello@orchestraai.dev. Reports are handled
+confidentially.
+
+## Questions?
+
+- Open a [Discussion](https://github.com/orchestraai/orchestraai/discussions) for general questions
+- Open an [Issue](https://github.com/orchestraai/orchestraai/issues) for bugs or feature requests
+- Check existing issues before creating new ones
