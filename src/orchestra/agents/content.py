@@ -4,6 +4,9 @@ Uses LLM to generate caption variants, adapts tone/length per platform,
 and runs compliance checks before returning results.
 """
 
+import json
+
+import httpx
 import structlog
 
 from orchestra.agents.compliance import run_compliance_check
@@ -13,6 +16,7 @@ from orchestra.agents.contracts import (
     ContentGenerationResult,
 )
 from orchestra.agents.trace import ExecutionTrace, TraceTimer
+from orchestra.config import get_settings
 from orchestra.core.cost_router import ModelTier, TaskComplexity, route_model
 
 logger = structlog.get_logger("agent.content")
@@ -94,19 +98,35 @@ async def generate_content(
             "constraints": request.constraints,
         }
 
-        # Route to appropriate model tier
         complexity = TaskComplexity.MODERATE
         model_name, tier = route_model(complexity, prefer_local=prefer_local)
         logger.info("content_model_selected", tier=tier.value, model=model_name)
 
-        # Generate variants (LLM call placeholder)
         variants = []
         for i in range(request.num_variants):
+            text = await _call_llm(
+                model_name=model_name,
+                tier=tier,
+                topic=request.topic,
+                platform=request.platform,
+                tone=request.tone,
+                max_len=max_len,
+                style=style,
+                variant_num=i + 1,
+                target_audience=request.target_audience,
+            )
+
+            hashtags: list[str] = []
+            if request.include_hashtags:
+                hashtags = _extract_hashtags(text)
+                if not hashtags:
+                    tag = request.topic.replace(" ", "")
+                    hashtags = [f"#{tag}"]
+
             variant = {
                 "index": i,
-                "text": f"[Generated {request.platform} content about '{request.topic}' "
-                f"in {request.tone} tone -- variant {i + 1}]",
-                "hashtags": [f"#{request.topic.replace(' ', '')}" ] if request.include_hashtags else [],
+                "text": text,
+                "hashtags": hashtags,
                 "estimated_engagement": 0.0,
                 "model_tier": str(tier),
             }
@@ -147,3 +167,125 @@ async def generate_content(
     )
 
     return result
+
+
+def _build_prompt(
+    topic: str,
+    platform: str,
+    tone: str,
+    max_len: int,
+    style: dict,
+    variant_num: int,
+    target_audience: dict | None = None,
+) -> str:
+    audience_line = ""
+    if target_audience:
+        audience_line = f"\nTarget audience: {json.dumps(target_audience)}"
+
+    return (
+        f"You are a world-class social media marketer. "
+        f"Write a single {platform} post about: {topic}\n\n"
+        f"Requirements:\n"
+        f"- Tone: {tone}\n"
+        f"- Style: {style.get('style', 'professional')}\n"
+        f"- Maximum length: {max_len} characters\n"
+        f"- Include a clear call-to-action ({style.get('cta_style', 'engage')})\n"
+        f"- Include 2-4 relevant hashtags inline\n"
+        f"- This is variant #{variant_num}, make it unique"
+        f"{audience_line}\n\n"
+        f"Write ONLY the post text. No explanations, no labels, no quotes around it."
+    )
+
+
+def _extract_hashtags(text: str) -> list[str]:
+    import re
+    return re.findall(r"#\w+", text)
+
+
+async def _call_llm(
+    model_name: str,
+    tier: ModelTier,
+    topic: str,
+    platform: str,
+    tone: str,
+    max_len: int,
+    style: dict,
+    variant_num: int,
+    target_audience: dict | None = None,
+) -> str:
+    prompt = _build_prompt(topic, platform, tone, max_len, style, variant_num, target_audience)
+    settings = get_settings()
+
+    if tier == ModelTier.LOCAL:
+        return await _call_ollama(settings.ollama_base_url, settings.default_local_model, prompt)
+
+    if tier == ModelTier.FAST and settings.has_openai:
+        result = await _call_openai(settings.openai_api_key.get_secret_value(), model_name, prompt)
+        if not result.startswith("[Content generation failed"):
+            return result
+        logger.warning("openai_failed_falling_back_to_ollama")
+
+    if tier == ModelTier.CAPABLE and settings.has_anthropic:
+        result = await _call_anthropic(settings.anthropic_api_key.get_secret_value(), model_name, prompt)
+        if not result.startswith("[Content generation failed"):
+            return result
+        logger.warning("anthropic_failed_falling_back_to_ollama")
+
+    return await _call_ollama(settings.ollama_base_url, settings.default_local_model, prompt)
+
+
+async def _call_ollama(base_url: str, model: str, prompt: str) -> str:
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                f"{base_url}/api/generate",
+                json={"model": model, "prompt": prompt, "stream": False},
+            )
+            resp.raise_for_status()
+            return resp.json().get("response", "").strip()
+    except Exception as e:
+        logger.error("ollama_call_failed", error=str(e))
+        return f"[Content generation failed: {e}]"
+
+
+async def _call_openai(api_key: str, model: str, prompt: str) -> str:
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 500,
+                    "temperature": 0.8,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        logger.error("openai_call_failed", error=str(e))
+        return f"[Content generation failed: {e}]"
+
+
+async def _call_anthropic(api_key: str, model: str, prompt: str) -> str:
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "max_tokens": 500,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        logger.error("anthropic_call_failed", error=str(e))
+        return f"[Content generation failed: {e}]"
