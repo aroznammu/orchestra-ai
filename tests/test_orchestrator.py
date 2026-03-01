@@ -2,8 +2,18 @@
 
 import pytest
 
-from orchestra.agents.contracts import IntentType, OrchestratorState, ComplianceCheckResult
-from orchestra.agents.orchestrator import classify_intent, route_after_compliance
+from orchestra.agents.contracts import (
+    ComplianceCheckResult,
+    ContentGenerationResult,
+    IntentType,
+    OrchestratorState,
+    PolicyCheckResult,
+)
+from orchestra.agents.orchestrator import (
+    classify_intent,
+    route_after_compliance,
+    route_after_policy,
+)
 
 
 def test_classify_tweet_intent():
@@ -79,6 +89,84 @@ def test_route_respond_on_error():
     state = OrchestratorState(tenant_id="t1", user_input="tweet")
     state.error = "Something went wrong"
     assert route_after_compliance(state) == "respond"
+
+
+def test_route_after_policy_dispatches_to_platform_on_publish():
+    state = OrchestratorState(tenant_id="t1", user_input="tweet this")
+    state.intent = IntentType.PUBLISH_CONTENT
+    state.policy_result = PolicyCheckResult(valid=True, platform="twitter")
+    assert route_after_policy(state) == "platform_node"
+
+
+def test_route_after_policy_dispatches_to_platform_on_schedule():
+    state = OrchestratorState(tenant_id="t1", user_input="schedule this")
+    state.intent = IntentType.SCHEDULE_CONTENT
+    state.policy_result = PolicyCheckResult(valid=True, platform="twitter")
+    assert route_after_policy(state) == "platform_node"
+
+
+def test_route_after_policy_respond_on_create_campaign():
+    state = OrchestratorState(tenant_id="t1", user_input="new campaign")
+    state.intent = IntentType.CREATE_CAMPAIGN
+    state.policy_result = PolicyCheckResult(valid=True, platform="twitter")
+    assert route_after_policy(state) == "respond"
+
+
+def test_route_after_policy_respond_on_policy_failure():
+    state = OrchestratorState(tenant_id="t1", user_input="tweet")
+    state.intent = IntentType.PUBLISH_CONTENT
+    state.policy_result = PolicyCheckResult(
+        valid=False, errors=["Content exceeds twitter limit"], platform="twitter"
+    )
+    assert route_after_policy(state) == "respond"
+
+
+def test_route_after_policy_respond_on_error():
+    state = OrchestratorState(tenant_id="t1", user_input="tweet")
+    state.intent = IntentType.PUBLISH_CONTENT
+    state.error = "Something broke"
+    assert route_after_policy(state) == "respond"
+
+
+@pytest.mark.asyncio
+async def test_policy_node_validates_content():
+    from orchestra.agents.orchestrator import policy_node
+
+    state = OrchestratorState(
+        tenant_id="t1",
+        user_input="Short tweet",
+        raw_payload={"platform": "twitter"},
+    )
+    state.content_result = ContentGenerationResult(
+        variants=[{"text": "Hello world!", "hashtags": []}],
+        selected_variant=0,
+        confidence=0.9,
+    )
+
+    result = await policy_node(state)
+    assert result.policy_result is not None
+    assert result.policy_result.valid is True
+
+
+@pytest.mark.asyncio
+async def test_policy_node_catches_long_content():
+    from orchestra.agents.orchestrator import policy_node
+
+    state = OrchestratorState(
+        tenant_id="t1",
+        user_input="Long tweet",
+        raw_payload={"platform": "twitter"},
+    )
+    state.content_result = ContentGenerationResult(
+        variants=[{"text": "x" * 300, "hashtags": []}],
+        selected_variant=0,
+        confidence=0.9,
+    )
+
+    result = await policy_node(state)
+    assert result.policy_result is not None
+    assert result.policy_result.valid is False
+    assert any("exceeds" in e.lower() for e in result.policy_result.errors)
 
 
 @pytest.mark.asyncio

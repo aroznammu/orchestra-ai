@@ -172,6 +172,16 @@ class PlatformActionResult(BaseModel):
     error: str | None = None
 
 
+class PolicyCheckResult(BaseModel):
+    """Result from policy agent content validation."""
+
+    valid: bool = True
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    suggestions: list[str] = Field(default_factory=list)
+    platform: str = ""
+
+
 class OrchestratorState(BaseModel):
     """Full state for the LangGraph orchestrator."""
 
@@ -181,6 +191,7 @@ class OrchestratorState(BaseModel):
     messages: list[AgentMessage] = Field(default_factory=list)
     compliance_result: ComplianceCheckResult | None = None
     content_result: ContentGenerationResult | None = None
+    policy_result: PolicyCheckResult | None = None
     optimization_result: OptimizationResult | None = None
     analytics_result: AnalyticsResult | None = None
     platform_result: PlatformActionResult | None = None

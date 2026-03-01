@@ -1,9 +1,12 @@
 """LangGraph Orchestrator -- the main AI agent workflow.
 
 Routes user intents through a directed graph of specialized agents:
-  classify_intent -> compliance -> route -> [content|analytics|optimize|platform] -> respond
+  classify -> compliance -> route -> [content -> policy -> platform] -> respond
+                                  -> [analytics] -> respond
+                                  -> [optimize] -> respond
 
 Every action passes through the compliance gate first.
+Content creation additionally goes through policy validation and platform dispatch.
 """
 
 from typing import Any
@@ -22,9 +25,13 @@ from orchestra.agents.contracts import (
     IntentType,
     OrchestratorState,
     OptimizationRequest,
+    PlatformActionRequest,
+    PolicyCheckResult,
     TaskStatus,
 )
 from orchestra.agents.optimizer import run_optimization
+from orchestra.agents.platform_agent import execute_platform_action
+from orchestra.agents.policy import validate_content_policy
 from orchestra.agents.safety import check_safety, cleanup_trace
 from orchestra.agents.trace import ExecutionTrace, TraceTimer
 from orchestra.core.exceptions import AgentLoopError, AgentTimeoutError
@@ -146,6 +153,146 @@ async def content_node(state: OrchestratorState) -> OrchestratorState:
     return state
 
 
+async def policy_node(state: OrchestratorState) -> OrchestratorState:
+    """Validate generated content against platform-specific policies."""
+    trace = ExecutionTrace(state.trace_id, state.tenant_id)
+
+    try:
+        check_safety(state, AgentRole.POLICY)
+    except (AgentLoopError, AgentTimeoutError) as e:
+        state.error = str(e)
+        state.is_complete = True
+        return state
+
+    platform = state.raw_payload.get("platform", "twitter")
+    content_text = ""
+    hashtags: list[str] = []
+
+    if state.content_result and state.content_result.variants:
+        selected = state.content_result.selected_variant
+        variant = state.content_result.variants[selected] if selected < len(state.content_result.variants) else state.content_result.variants[0]
+        content_text = variant.get("text", variant.get("content", ""))
+        hashtags = variant.get("hashtags", [])
+
+    if not content_text:
+        content_text = state.raw_payload.get("content", state.user_input)
+
+    result = await validate_content_policy(
+        content=content_text,
+        platform=platform,
+        hashtags=hashtags or state.raw_payload.get("hashtags", []),
+        media_urls=state.raw_payload.get("media_urls", []),
+        link=state.raw_payload.get("link"),
+        trace=trace,
+    )
+
+    state.policy_result = PolicyCheckResult(**result)
+    state.depth += 1
+    return state
+
+
+def route_after_policy(state: OrchestratorState) -> str:
+    """After policy check, dispatch to platform if publish/schedule, else respond."""
+    if state.error:
+        return "respond"
+
+    if state.policy_result and not state.policy_result.valid:
+        return "respond"
+
+    if state.intent in (IntentType.PUBLISH_CONTENT, IntentType.SCHEDULE_CONTENT):
+        return "platform_node"
+
+    return "respond"
+
+
+async def platform_node(state: OrchestratorState) -> OrchestratorState:
+    """Dispatch publish/schedule action to the target platform."""
+    trace = ExecutionTrace(state.trace_id, state.tenant_id)
+
+    try:
+        check_safety(state, AgentRole.PLATFORM)
+    except (AgentLoopError, AgentTimeoutError) as e:
+        state.error = str(e)
+        state.is_complete = True
+        return state
+
+    platform = state.raw_payload.get("platform", "twitter")
+
+    content_payload: dict[str, Any] = {}
+    if state.content_result and state.content_result.variants:
+        selected = state.content_result.selected_variant
+        variant = state.content_result.variants[selected] if selected < len(state.content_result.variants) else state.content_result.variants[0]
+        content_payload = {
+            "text": variant.get("text", variant.get("content", "")),
+            "hashtags": variant.get("hashtags", []),
+            "media_urls": state.raw_payload.get("media_urls", []),
+            "link": state.raw_payload.get("link"),
+        }
+    else:
+        content_payload = {
+            "text": state.raw_payload.get("content", state.user_input),
+            "hashtags": state.raw_payload.get("hashtags", []),
+            "media_urls": state.raw_payload.get("media_urls", []),
+        }
+
+    if state.intent == IntentType.SCHEDULE_CONTENT and "scheduled_at" in state.raw_payload:
+        content_payload["scheduled_at"] = state.raw_payload["scheduled_at"]
+
+    action = "schedule" if state.intent == IntentType.SCHEDULE_CONTENT else "publish"
+
+    access_token = state.raw_payload.get("access_token", "")
+    if not access_token:
+        try:
+            access_token = await _lookup_platform_token(state.tenant_id, platform)
+        except Exception as e:
+            logger.warning("platform_token_lookup_failed", platform=platform, error=str(e))
+
+    if not access_token:
+        state.platform_result = PlatformActionRequest(
+            platform=platform, action=action, content=content_payload,
+        )
+        state.error = f"No access token for {platform}. Connect the platform first."
+        state.depth += 1
+        return state
+
+    request = PlatformActionRequest(
+        platform=platform,
+        action=action,
+        content=content_payload,
+    )
+
+    result = await execute_platform_action(request, access_token, trace)
+    state.platform_result = result
+    state.depth += 1
+    return state
+
+
+async def _lookup_platform_token(tenant_id: str, platform: str) -> str:
+    """Look up encrypted access token for a platform from the DB."""
+    try:
+        from sqlalchemy import select
+        from orchestra.db.models import PlatformConnection, PlatformType
+        from orchestra.db.session import async_session_factory
+        from orchestra.security.encryption import decrypt_token
+        import uuid
+
+        pt = PlatformType(platform)
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(PlatformConnection).where(
+                    PlatformConnection.tenant_id == uuid.UUID(tenant_id),
+                    PlatformConnection.platform == pt,
+                    PlatformConnection.is_active == True,  # noqa: E712
+                )
+            )
+            conn = result.scalar_one_or_none()
+            if conn:
+                return decrypt_token(conn.access_token_encrypted)
+    except Exception as e:
+        logger.debug("token_lookup_fallback", error=str(e))
+    return ""
+
+
 async def analytics_node(state: OrchestratorState) -> OrchestratorState:
     """Fetch and aggregate analytics via the analytics agent."""
     trace = ExecutionTrace(state.trace_id, state.tenant_id)
@@ -210,6 +357,8 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("classify", classify_intent)
     graph.add_node("compliance_gate", compliance_gate)
     graph.add_node("content_node", content_node)
+    graph.add_node("policy_node", policy_node)
+    graph.add_node("platform_node", platform_node)
     graph.add_node("analytics_node", analytics_node)
     graph.add_node("optimize_node", optimize_node)
     graph.add_node("respond", respond)
@@ -229,7 +378,18 @@ def build_orchestrator_graph() -> StateGraph:
         },
     )
 
-    graph.add_edge("content_node", "respond")
+    graph.add_edge("content_node", "policy_node")
+
+    graph.add_conditional_edges(
+        "policy_node",
+        route_after_policy,
+        {
+            "platform_node": "platform_node",
+            "respond": "respond",
+        },
+    )
+
+    graph.add_edge("platform_node", "respond")
     graph.add_edge("analytics_node", "respond")
     graph.add_edge("optimize_node", "respond")
     graph.add_edge("respond", END)
@@ -242,10 +402,7 @@ async def run_orchestrator(
     tenant_id: str,
     payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """High-level entry point: run the full agent orchestration pipeline.
-
-    Returns a dict with the orchestration results and trace summary.
-    """
+    """High-level entry point: run the full agent orchestration pipeline."""
     graph = build_orchestrator_graph()
     app = graph.compile()
 
@@ -274,6 +431,18 @@ async def run_orchestrator(
 
     if final_state.get("content_result"):
         result["content"] = final_state["content_result"].model_dump()
+
+    if final_state.get("policy_result"):
+        pr = final_state["policy_result"]
+        result["policy"] = {
+            "valid": pr.valid,
+            "errors": pr.errors,
+            "warnings": pr.warnings,
+            "suggestions": pr.suggestions,
+        }
+
+    if final_state.get("platform_result"):
+        result["platform"] = final_state["platform_result"].model_dump() if hasattr(final_state["platform_result"], "model_dump") else {}
 
     if final_state.get("analytics_result"):
         result["analytics"] = final_state["analytics_result"].model_dump()
