@@ -1,17 +1,21 @@
 """FastAPI application entry point for OrchestraAI."""
 
+import pathlib
 from contextlib import asynccontextmanager
 from typing import Any
 
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import FileResponse, ORJSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from orchestra.api.middleware.audit import AuditLogMiddleware
 from orchestra.api.middleware.rate_limit import RateLimitMiddleware
 from orchestra.api.routes import audit, auth, gdpr, health, kill_switch, orchestrator, platforms
 from orchestra.config import get_settings
+
+STATIC_DIR = pathlib.Path(__file__).parent / "static"
 from orchestra.core.exceptions import (
     AuthenticationError,
     AuthorizationError,
@@ -116,3 +120,12 @@ app.include_router(orchestrator.router, prefix="/api/v1")
 app.include_router(gdpr.router, prefix="/api/v1")
 app.include_router(audit.router, prefix="/api/v1")
 app.include_router(kill_switch.router, prefix="/api/v1")
+
+# --- Dashboard UI ---
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_dashboard() -> FileResponse:
+        return FileResponse(str(STATIC_DIR / "index.html"))

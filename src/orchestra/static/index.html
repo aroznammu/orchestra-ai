@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrchestraAI — Marketing Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81',950:'#1e1b4e' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn .3s ease-in; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .chat-scroll::-webkit-scrollbar { width:6px; }
+        .chat-scroll::-webkit-scrollbar-track { background:transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background:#374151;border-radius:3px; }
+    </style>
+</head>
+<body class="h-full dark">
+<div id="app" class="flex h-full">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+        <div class="p-5 border-b border-gray-800">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-brand-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-white font-semibold text-lg leading-tight">OrchestraAI</h1>
+                    <p class="text-gray-500 text-xs">Marketing Command Center</p>
+                </div>
+            </div>
+        </div>
+        <nav class="flex-1 p-3 space-y-1">
+            <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Dashboard
+            </button>
+            <button onclick="navigate('orchestrator')" data-nav="orchestrator" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                AI Orchestrator
+            </button>
+            <button onclick="navigate('platforms')" data-nav="platforms" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                Platforms
+            </button>
+            <button onclick="navigate('killswitch')" data-nav="killswitch" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                Kill Switch
+            </button>
+            <button onclick="navigate('audit')" data-nav="audit" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Audit Log
+            </button>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <div id="health-indicator" class="flex items-center gap-2 text-xs">
+                <span class="w-2 h-2 rounded-full bg-gray-600 pulse-dot"></span>
+                <span class="text-gray-500">Checking status...</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto bg-gray-950">
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="page hidden p-8 fade-in">
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-white">Dashboard</h2>
+                    <p class="text-gray-400 mt-1">System overview and health metrics</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-gray-400 text-sm font-medium">API Status</span>
+                            <span id="stat-api" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">--</span>
+                        </div>
+                        <p id="stat-api-text" class="text-2xl font-bold text-white">--</p>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-gray-400 text-sm font-medium">Platforms</span>
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/></svg>
+                        </div>
+                        <p id="stat-platforms" class="text-2xl font-bold text-white">9</p>
+                        <p class="text-gray-500 text-xs mt-1">Supported connectors</p>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-gray-400 text-sm font-medium">Kill Switch</span>
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        </div>
+                        <p id="stat-killswitch" class="text-2xl font-bold text-white">--</p>
+                        <p class="text-gray-500 text-xs mt-1">Emergency halt status</p>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-gray-400 text-sm font-medium">Tests</span>
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-2xl font-bold text-emerald-400">74/74</p>
+                        <p class="text-gray-500 text-xs mt-1">All passing</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                        <h3 class="text-white font-semibold mb-4">Architecture</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+                                <span class="text-gray-300 text-sm">FastAPI Backend</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400">Running</span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+                                <span class="text-gray-300 text-sm">PostgreSQL</span>
+                                <span id="dep-postgres" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Checking</span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+                                <span class="text-gray-300 text-sm">Redis</span>
+                                <span id="dep-redis" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Checking</span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+                                <span class="text-gray-300 text-sm">Kafka</span>
+                                <span id="dep-kafka" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Checking</span>
+                            </div>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-800">
+                                <span class="text-gray-300 text-sm">Qdrant Vector DB</span>
+                                <span id="dep-qdrant" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Checking</span>
+                            </div>
+                            <div class="flex items-center justify-between py-2">
+                                <span class="text-gray-300 text-sm">Ollama (Local LLM)</span>
+                                <span id="dep-ollama" class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">Checking</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                        <h3 class="text-white font-semibold mb-4">Safety Features</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 py-2">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-950 flex items-center justify-center"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+                                <div><p class="text-gray-200 text-sm font-medium">Compliance Gate</p><p class="text-gray-500 text-xs">Every action passes compliance first</p></div>
+                            </div>
+                            <div class="flex items-center gap-3 py-2">
+                                <div class="w-8 h-8 rounded-lg bg-amber-950 flex items-center justify-center"><svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg></div>
+                                <div><p class="text-gray-200 text-sm font-medium">Spend Guardrails</p><p class="text-gray-500 text-xs">3-tier caps: global, platform, campaign</p></div>
+                            </div>
+                            <div class="flex items-center gap-3 py-2">
+                                <div class="w-8 h-8 rounded-lg bg-red-950 flex items-center justify-center"><svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"/></svg></div>
+                                <div><p class="text-gray-200 text-sm font-medium">Kill Switch</p><p class="text-gray-500 text-xs">Instant halt across all platforms</p></div>
+                            </div>
+                            <div class="flex items-center gap-3 py-2">
+                                <div class="w-8 h-8 rounded-lg bg-blue-950 flex items-center justify-center"><svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></div>
+                                <div><p class="text-gray-200 text-sm font-medium">Full Audit Trail</p><p class="text-gray-500 text-xs">Every decision logged with reasoning</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Orchestrator Page -->
+        <div id="page-orchestrator" class="page hidden flex flex-col h-full fade-in">
+            <div class="p-6 border-b border-gray-800">
+                <h2 class="text-xl font-bold text-white">AI Orchestrator</h2>
+                <p class="text-gray-400 text-sm mt-1">Natural language marketing commands</p>
+            </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 chat-scroll">
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 max-w-2xl">
+                        <p class="text-gray-300 text-sm">Welcome to OrchestraAI. I can help you with marketing tasks like:</p>
+                        <ul class="text-gray-400 text-sm mt-2 space-y-1">
+                            <li>• <span class="text-gray-300">"Create a tweet about our product launch"</span></li>
+                            <li>• <span class="text-gray-300">"Show me analytics for last month"</span></li>
+                            <li>• <span class="text-gray-300">"Optimize our campaign budget"</span></li>
+                            <li>• <span class="text-gray-300">"Generate a performance report"</span></li>
+                            <li>• <span class="text-gray-300">"Reallocate budget across platforms"</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-800 bg-gray-900/50">
+                <div class="max-w-3xl mx-auto flex gap-3">
+                    <input id="chat-input" type="text" placeholder="Tell OrchestraAI what you need..."
+                        class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        onkeydown="if(event.key==='Enter')sendMessage()">
+                    <button onclick="sendMessage()" id="send-btn" class="px-5 py-3 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platforms Page -->
+        <div id="page-platforms" class="page hidden p-8 fade-in">
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-white">Platform Connectors</h2>
+                    <p class="text-gray-400 mt-1">Manage social and ad platform integrations</p>
+                </div>
+                <div id="platforms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Kill Switch Page -->
+        <div id="page-killswitch" class="page hidden p-8 fade-in">
+            <div class="max-w-4xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-white">Emergency Kill Switch</h2>
+                    <p class="text-gray-400 mt-1">Instantly halt all spend operations across all platforms</p>
+                </div>
+                <div id="killswitch-panel" class="bg-gray-900 border border-gray-800 rounded-xl p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-white text-lg font-semibold">Global Kill Switch</h3>
+                            <p class="text-gray-400 text-sm mt-1">When active, NO spend operations will proceed</p>
+                        </div>
+                        <div id="ks-status-badge" class="px-4 py-2 rounded-full text-sm font-medium bg-emerald-950 text-emerald-400">
+                            Inactive
+                        </div>
+                    </div>
+                    <div class="bg-gray-800/50 rounded-xl p-6 mb-6">
+                        <label class="block text-gray-300 text-sm font-medium mb-2">Reason for activation</label>
+                        <input id="ks-reason" type="text" placeholder="e.g. Anomalous spend detected on Facebook..."
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="activateKillSwitch()" id="ks-activate-btn" class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-xl transition-colors">
+                            Activate Kill Switch
+                        </button>
+                        <button onclick="deactivateKillSwitch()" id="ks-deactivate-btn" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-xl transition-colors hidden">
+                            Deactivate Kill Switch
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 mt-5">
+                    <h3 class="text-white font-semibold mb-4">Event History</h3>
+                    <div id="ks-history" class="space-y-2 text-sm text-gray-400">
+                        <p>No kill switch events recorded.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Page -->
+        <div id="page-audit" class="page hidden p-8 fade-in">
+            <div class="max-w-6xl mx-auto">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-white">Audit Log</h2>
+                    <p class="text-gray-400 mt-1">Complete history of all decisions, actions, and spend</p>
+                </div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <div id="audit-entries" class="space-y-2">
+                        <p class="text-gray-500 text-sm">Audit entries will appear here as the system processes actions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+const API = '';
+let authToken = null;
+
+async function apiCall(method, path, body) {
+    const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+    };
+    if (authToken) opts.headers['Authorization'] = `Bearer ${authToken}`;
+    if (body) opts.body = JSON.stringify(body);
+    try {
+        const r = await fetch(`${API}${path}`, opts);
+        return { ok: r.ok, status: r.status, data: await r.json().catch(() => null) };
+    } catch (e) {
+        return { ok: false, status: 0, data: null, error: e.message };
+    }
+}
+
+async function autoLogin() {
+    const res = await apiCall('POST', '/api/v1/auth/register', {
+        email: `dashboard-${Date.now()}@orchestra.local`,
+        password: 'DashboardUser123!',
+        full_name: 'Dashboard User',
+        tenant_name: 'OrchestraAI',
+    });
+    if (res.ok && res.data) {
+        authToken = res.data.access_token;
+    }
+}
+
+function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('bg-gray-800', 'text-white');
+        b.classList.add('text-gray-300');
+    });
+    const el = document.getElementById(`page-${page}`);
+    if (el) { el.classList.remove('hidden'); }
+    const btn = document.querySelector(`[data-nav="${page}"]`);
+    if (btn) { btn.classList.add('bg-gray-800', 'text-white'); btn.classList.remove('text-gray-300'); }
+
+    if (page === 'platforms') loadPlatforms();
+    if (page === 'killswitch') loadKillSwitchStatus();
+    if (page === 'audit') loadAuditLog();
+}
+
+async function checkHealth() {
+    const res = await apiCall('GET', '/health');
+    const indicator = document.getElementById('health-indicator');
+    const apiStat = document.getElementById('stat-api');
+    const apiText = document.getElementById('stat-api-text');
+
+    if (res.ok && res.data) {
+        indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span><span class="text-emerald-400">System Operational</span>`;
+        apiStat.className = 'text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400';
+        apiStat.textContent = 'Healthy';
+        apiText.textContent = 'Operational';
+        apiText.className = 'text-2xl font-bold text-emerald-400';
+    } else {
+        indicator.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400 pulse-dot"></span><span class="text-red-400">System Offline</span>`;
+        apiStat.className = 'text-xs px-2 py-0.5 rounded-full bg-red-950 text-red-400';
+        apiStat.textContent = 'Offline';
+        apiText.textContent = 'Offline';
+        apiText.className = 'text-2xl font-bold text-red-400';
+    }
+
+    const ready = await apiCall('GET', '/ready');
+    if (ready.ok && ready.data && ready.data.checks) {
+        const checks = ready.data.checks;
+        for (const [key, val] of Object.entries(checks)) {
+            const el = document.getElementById(`dep-${key}`);
+            if (el) {
+                if (val === 'ok' || val === true) {
+                    el.className = 'text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400';
+                    el.textContent = 'Connected';
+                } else {
+                    el.className = 'text-xs px-2 py-0.5 rounded-full bg-amber-950 text-amber-400';
+                    el.textContent = 'Unavailable';
+                }
+            }
+        }
+    }
+}
+
+async function loadPlatforms() {
+    const grid = document.getElementById('platforms-grid');
+    const res = await apiCall('GET', '/api/v1/platforms/available');
+
+    const platformIcons = {
+        twitter: '𝕏', youtube: '▶', facebook: 'f', instagram: '📷',
+        tiktok: '♪', linkedin: 'in', google_ads: 'G', snapchat: '👻', pinterest: 'P',
+    };
+    const platformColors = {
+        twitter: 'gray', youtube: 'red', facebook: 'blue', instagram: 'pink',
+        tiktok: 'cyan', linkedin: 'blue', google_ads: 'yellow', snapchat: 'yellow', pinterest: 'red',
+    };
+
+    if (res.ok && res.data && res.data.platforms) {
+        grid.innerHTML = res.data.platforms.map(p => `
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 transition-colors">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-lg">
+                        ${platformIcons[p.platform] || '?'}
+                    </div>
+                    <div>
+                        <p class="text-white font-medium">${p.name}</p>
+                        <p class="text-gray-500 text-xs">${p.platform}</p>
+                    </div>
+                </div>
+                <div class="space-y-1 text-xs text-gray-400">
+                    <p>Max text: ${p.limits.max_text_length || '—'} chars</p>
+                    <p>Max hashtags: ${p.limits.max_hashtags || '—'}</p>
+                    <p>Max media: ${p.limits.max_media_items || '—'}</p>
+                </div>
+                <div class="mt-4">
+                    <span class="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400">Not connected</span>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        grid.innerHTML = '<p class="text-gray-500 col-span-3">Could not load platforms. Is the API running?</p>';
+    }
+}
+
+async function loadKillSwitchStatus() {
+    if (!authToken) await autoLogin();
+    const res = await apiCall('GET', '/api/v1/kill-switch/status');
+    const badge = document.getElementById('ks-status-badge');
+    const activateBtn = document.getElementById('ks-activate-btn');
+    const deactivateBtn = document.getElementById('ks-deactivate-btn');
+    const dashStat = document.getElementById('stat-killswitch');
+
+    if (res.ok && res.data) {
+        const active = res.data.is_affected;
+        if (active) {
+            badge.className = 'px-4 py-2 rounded-full text-sm font-medium bg-red-950 text-red-400';
+            badge.textContent = 'ACTIVE';
+            activateBtn.classList.add('hidden');
+            deactivateBtn.classList.remove('hidden');
+            if (dashStat) { dashStat.textContent = 'ACTIVE'; dashStat.className = 'text-2xl font-bold text-red-400'; }
+        } else {
+            badge.className = 'px-4 py-2 rounded-full text-sm font-medium bg-emerald-950 text-emerald-400';
+            badge.textContent = 'Inactive';
+            activateBtn.classList.remove('hidden');
+            deactivateBtn.classList.add('hidden');
+            if (dashStat) { dashStat.textContent = 'Inactive'; dashStat.className = 'text-2xl font-bold text-emerald-400'; }
+        }
+    }
+
+    const histRes = await apiCall('GET', '/api/v1/kill-switch/history');
+    const histEl = document.getElementById('ks-history');
+    if (histRes.ok && histRes.data && histRes.data.length > 0) {
+        histEl.innerHTML = histRes.data.map(e => `
+            <div class="flex items-center gap-3 py-2 border-b border-gray-800">
+                <span class="w-2 h-2 rounded-full ${e.action === 'activate' ? 'bg-red-400' : 'bg-emerald-400'}"></span>
+                <span class="text-gray-300">${e.action}</span>
+                <span class="text-gray-500">by ${e.triggered_by}</span>
+                <span class="text-gray-600 ml-auto text-xs">${new Date(e.timestamp).toLocaleString()}</span>
+            </div>
+        `).join('');
+    }
+}
+
+async function activateKillSwitch() {
+    if (!authToken) await autoLogin();
+    const reason = document.getElementById('ks-reason').value || 'Manual activation from dashboard';
+    await apiCall('POST', '/api/v1/kill-switch/activate', { reason });
+    loadKillSwitchStatus();
+}
+
+async function deactivateKillSwitch() {
+    if (!authToken) await autoLogin();
+    await apiCall('POST', '/api/v1/kill-switch/deactivate');
+    loadKillSwitchStatus();
+}
+
+async function loadAuditLog() {
+    if (!authToken) await autoLogin();
+    const res = await apiCall('GET', '/api/v1/audit?limit=50');
+    const el = document.getElementById('audit-entries');
+
+    if (res.ok && res.data && res.data.entries && res.data.entries.length > 0) {
+        el.innerHTML = res.data.entries.map(e => `
+            <div class="flex items-center gap-3 py-2.5 border-b border-gray-800">
+                <span class="w-2 h-2 rounded-full ${e.outcome === 'success' ? 'bg-emerald-400' : 'bg-red-400'}"></span>
+                <span class="text-gray-300 text-sm flex-1">${e.action}</span>
+                <span class="text-gray-500 text-xs">${e.category}</span>
+                <span class="text-gray-600 text-xs">${new Date(e.timestamp).toLocaleString()}</span>
+            </div>
+        `).join('');
+    } else {
+        el.innerHTML = '<p class="text-gray-500 text-sm">No audit entries yet. Actions will be logged as the system processes requests.</p>';
+    }
+}
+
+function addChatMessage(role, content, extra) {
+    const container = document.getElementById('chat-messages');
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.className = `flex gap-3 ${isUser ? 'justify-end' : ''} fade-in`;
+
+    let extraHtml = '';
+    if (extra) {
+        if (extra.intent) extraHtml += `<span class="inline-block px-2 py-0.5 rounded-full bg-brand-950 text-brand-300 text-xs mr-2">Intent: ${extra.intent}</span>`;
+        if (extra.compliance) {
+            const c = extra.compliance;
+            const color = c.approved ? 'emerald' : 'red';
+            extraHtml += `<span class="inline-block px-2 py-0.5 rounded-full bg-${color}-950 text-${color}-400 text-xs mr-2">Compliance: ${c.approved ? 'Approved' : 'Blocked'} (${c.risk_level})</span>`;
+        }
+        if (extra.error) extraHtml += `<span class="inline-block px-2 py-0.5 rounded-full bg-red-950 text-red-400 text-xs">${extra.error}</span>`;
+        if (extraHtml) extraHtml = `<div class="mt-2">${extraHtml}</div>`;
+    }
+
+    if (isUser) {
+        div.innerHTML = `<div class="bg-brand-600/20 border border-brand-800/30 rounded-xl p-4 max-w-2xl"><p class="text-gray-200 text-sm">${content}</p></div>`;
+    } else {
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center flex-shrink-0 mt-1">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 max-w-2xl">
+                <p class="text-gray-300 text-sm">${content}</p>
+                ${extraHtml}
+            </div>`;
+    }
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+
+    if (!authToken) await autoLogin();
+
+    addChatMessage('user', msg);
+
+    const sendBtn = document.getElementById('send-btn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+    const res = await apiCall('POST', '/api/v1/orchestrator', { input: msg });
+
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send';
+
+    if (res.ok && res.data) {
+        const d = res.data;
+        let response = '';
+
+        if (d.content && d.content.variants && d.content.variants.length > 0) {
+            response = d.content.variants.map((v, i) => `<strong>Variant ${i+1}:</strong> ${v.text || v.content || JSON.stringify(v)}`).join('<br><br>');
+        } else if (d.analytics) {
+            response = `Analytics data retrieved. ${d.analytics.insights ? d.analytics.insights.join('. ') : 'See results below.'}`;
+        } else if (d.error) {
+            response = `Error: ${d.error}`;
+        } else {
+            response = `Processed your request. Intent: <strong>${d.intent || 'unknown'}</strong>. Trace: ${d.trace_id || 'n/a'}`;
+        }
+
+        addChatMessage('ai', response, {
+            intent: d.intent,
+            compliance: d.compliance,
+            error: d.error,
+        });
+    } else {
+        addChatMessage('ai', 'Sorry, I encountered an error processing your request. Please check that the API is running.', { error: res.error || `Status ${res.status}` });
+    }
+}
+
+async function init() {
+    navigate('dashboard');
+    await checkHealth();
+    await autoLogin();
+    await loadKillSwitchStatus();
+    setInterval(checkHealth, 30000);
+}
+
+init();
+</script>
+</body>
+</html>
