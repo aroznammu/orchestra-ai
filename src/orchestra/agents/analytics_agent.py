@@ -4,6 +4,7 @@ Collects data from connected platforms, normalizes metrics,
 identifies trends, and generates actionable recommendations.
 """
 
+import uuid
 from typing import Any
 
 import structlog
@@ -27,32 +28,41 @@ ENGAGEMENT_BENCHMARKS = {
 async def run_analytics(
     request: AnalyticsRequest,
     trace: ExecutionTrace,
+    *,
+    tenant_id: str | None = None,
 ) -> AnalyticsResult:
-    """Aggregate analytics across platforms and generate insights."""
+    """Aggregate analytics across platforms and generate insights.
+
+    When tenant_id is provided, queries PlatformConnection records and
+    fetches real metrics from each connector.  Falls back to zeros when
+    a connector is unreachable or the tenant has no connections.
+    """
     with TraceTimer() as timer:
         platforms = request.platforms or list(ENGAGEMENT_BENCHMARKS.keys())
 
-        # Build per-platform metrics (placeholder -- real impl queries each connector)
+        real_data: dict[str, Any] = {}
+        if tenant_id:
+            try:
+                real_data = await _fetch_real_platform_data(tenant_id, platforms)
+            except Exception as e:
+                logger.warning("real_data_fetch_failed", error=str(e))
+
         platform_metrics: dict[str, Any] = {}
         for platform in platforms:
+            live = real_data.get(platform, {})
             platform_metrics[platform] = {
-                "impressions": 0,
-                "engagement": 0,
-                "clicks": 0,
-                "engagement_rate": 0.0,
-                "click_rate": 0.0,
-                "spend": 0.0,
-                "roi": 0.0,
+                "impressions": live.get("impressions", 0),
+                "engagement": live.get("engagement", 0),
+                "clicks": live.get("clicks", 0),
+                "engagement_rate": live.get("engagement_rate", 0.0),
+                "click_rate": live.get("click_rate", 0.0),
+                "spend": live.get("spend", 0.0),
+                "roi": live.get("roi", 0.0),
                 "benchmark": ENGAGEMENT_BENCHMARKS.get(platform, {}),
             }
 
-        # Cross-platform aggregation
         totals = _aggregate_metrics(platform_metrics)
-
-        # Generate insights
         insights = _generate_insights(platform_metrics, totals)
-
-        # Recommendations
         recommendations = _generate_recommendations(platform_metrics)
 
     result = AnalyticsResult(
@@ -81,6 +91,112 @@ async def run_analytics(
 
     return result
 
+
+# ---------------------------------------------------------------------------
+# Real platform data fetching
+# ---------------------------------------------------------------------------
+
+async def _fetch_real_platform_data(
+    tenant_id: str | None,
+    platforms: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Query PlatformConnection records and call each connector's get_analytics.
+
+    Returns a dict mapping platform name -> aggregated metric dict.
+    Falls back gracefully to empty dicts on any failure.
+    """
+    if not tenant_id:
+        return {}
+
+    try:
+        from sqlalchemy import select
+        from orchestra.db.models import PlatformConnection, PlatformType, CampaignPost
+        from orchestra.db.session import async_session_factory
+        from orchestra.security.encryption import decrypt_token
+        from orchestra.platforms import get_platform
+
+        tenant_uuid = uuid.UUID(tenant_id)
+        platform_data: dict[str, dict[str, Any]] = {}
+
+        async with async_session_factory() as session:
+            result = await session.execute(
+                select(PlatformConnection).where(
+                    PlatformConnection.tenant_id == tenant_uuid,
+                    PlatformConnection.is_active == True,  # noqa: E712
+                )
+            )
+            connections = result.scalars().all()
+
+            conn_by_platform = {c.platform.value: c for c in connections}
+
+            for platform_name in platforms:
+                conn = conn_by_platform.get(platform_name)
+                if not conn:
+                    continue
+
+                try:
+                    access_token = decrypt_token(conn.access_token_encrypted)
+                    connector = get_platform(PlatformType(platform_name))
+
+                    posts_result = await session.execute(
+                        select(CampaignPost).where(
+                            CampaignPost.platform == PlatformType(platform_name),
+                        ).limit(20)
+                    )
+                    posts = posts_result.scalars().all()
+
+                    agg: dict[str, Any] = {
+                        "impressions": 0, "engagement": 0, "clicks": 0,
+                        "spend": 0.0, "engagement_rate": 0.0, "click_rate": 0.0,
+                        "roi": 0.0,
+                    }
+
+                    for post in posts:
+                        if not post.platform_post_id:
+                            continue
+                        try:
+                            analytics = await connector.get_analytics(
+                                post.platform_post_id, access_token,
+                            )
+                            m = analytics.metrics
+                            agg["impressions"] += m.impressions
+                            agg["engagement"] += m.likes + m.comments + m.shares
+                            agg["clicks"] += m.clicks
+                        except Exception as e:
+                            logger.debug(
+                                "post_analytics_fetch_failed",
+                                platform=platform_name,
+                                post_id=post.platform_post_id,
+                                error=str(e),
+                            )
+
+                    if agg["impressions"] > 0:
+                        agg["engagement_rate"] = round(
+                            agg["engagement"] / agg["impressions"], 4
+                        )
+                        agg["click_rate"] = round(
+                            agg["clicks"] / agg["impressions"], 4
+                        )
+
+                    platform_data[platform_name] = agg
+
+                except Exception as e:
+                    logger.warning(
+                        "platform_analytics_failed",
+                        platform=platform_name,
+                        error=str(e),
+                    )
+
+        return platform_data
+
+    except Exception as e:
+        logger.warning("analytics_data_fetch_failed", error=str(e))
+        return {}
+
+
+# ---------------------------------------------------------------------------
+# Aggregation helpers
+# ---------------------------------------------------------------------------
 
 def _aggregate_metrics(platform_metrics: dict[str, Any]) -> dict[str, Any]:
     total_impressions = sum(m.get("impressions", 0) for m in platform_metrics.values())

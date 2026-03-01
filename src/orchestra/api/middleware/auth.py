@@ -5,12 +5,15 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import bcrypt
+import structlog
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from orchestra.config import get_settings
+
+logger = structlog.get_logger("auth")
 
 settings = get_settings()
 http_bearer = HTTPBearer(auto_error=False)
@@ -71,11 +74,20 @@ async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Security(http_bearer)] = None,
     api_key: Annotated[str | None, Security(api_key_header)] = None,
 ) -> TokenPayload:
-    """Authenticate via JWT bearer token or API key header."""
+    """Authenticate via JWT bearer token or API key header.
+
+    API keys are looked up in the database (api_keys table). If the
+    database is unavailable, the key is also tried as a JWT (supports
+    JWT-formatted API keys issued by create_access_token).
+    """
     if credentials:
         return decode_access_token(credentials.credentials)
 
     if api_key:
+        payload = await _resolve_api_key(api_key)
+        if payload:
+            return payload
+        # Fall back to treating the key as a JWT (backwards compat)
         return decode_access_token(api_key)
 
     raise HTTPException(
@@ -83,6 +95,37 @@ async def get_current_user(
         detail="Missing authentication credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+async def _resolve_api_key(key: str) -> TokenPayload | None:
+    """Look up an API key in the database and return its associated identity."""
+    try:
+        from sqlalchemy import select
+        from orchestra.db.session import async_session_factory
+
+        session_ctx = async_session_factory()
+        async with session_ctx as db:
+            from orchestra.db.models import APIKey
+            result = await db.execute(
+                select(APIKey).where(APIKey.key_hash == _hash_api_key(key), APIKey.is_active == True)  # noqa: E712
+            )
+            api_key_row = result.scalar_one_or_none()
+            if api_key_row:
+                return TokenPayload(
+                    sub=str(api_key_row.user_id),
+                    tenant_id=str(api_key_row.tenant_id),
+                    role=api_key_row.role,
+                    exp=api_key_row.expires_at or datetime.now(UTC) + timedelta(days=365),
+                )
+    except Exception as exc:
+        logger.debug("api_key_db_lookup_skipped", reason=str(exc))
+    return None
+
+
+def _hash_api_key(key: str) -> str:
+    """Deterministic SHA-256 hash for API key storage/lookup."""
+    import hashlib
+    return hashlib.sha256(key.encode()).hexdigest()
 
 
 def require_role(*allowed_roles: str):

@@ -37,7 +37,8 @@ def test_access_token_is_decodable():
 
 
 @pytest.mark.asyncio
-async def test_register_creates_token(client):
+async def test_register_returns_503_without_db(client):
+    """Without real PostgreSQL, register should return 503 (not a fake token)."""
     resp = await client.post(
         "/api/v1/auth/register",
         json={
@@ -47,21 +48,17 @@ async def test_register_creates_token(client):
             "tenant_name": "TestOrg",
         },
     )
-    assert resp.status_code == 201
-    data = resp.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
+    assert resp.status_code == 503
 
 
 @pytest.mark.asyncio
-async def test_login_returns_token(client):
+async def test_login_returns_503_without_db(client):
+    """Without real PostgreSQL, login should return 503 (not a fake token)."""
     resp = await client.post(
         "/api/v1/auth/login",
         json={"email": "user@example.com", "password": "Pass1234!"},
     )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "access_token" in data
+    assert resp.status_code == 503
 
 
 @pytest.mark.asyncio

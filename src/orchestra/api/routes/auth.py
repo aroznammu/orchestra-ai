@@ -100,11 +100,11 @@ async def register(request: RegisterRequest) -> TokenResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.debug("db_register_fallback", error=str(e))
-        user_id = uuid.uuid4()
-        tenant_id = uuid.uuid4()
-        token = create_access_token(user_id, tenant_id, role="owner")
-        return TokenResponse(access_token=token)
+        logger.error("register_db_unavailable", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -132,11 +132,11 @@ async def login(request: LoginRequest) -> TokenResponse:
     except HTTPException:
         raise
     except Exception as e:
-        logger.debug("db_login_fallback", error=str(e))
-        user_id = uuid.uuid4()
-        tenant_id = uuid.uuid4()
-        token = create_access_token(user_id, tenant_id, role="owner")
-        return TokenResponse(access_token=token)
+        logger.error("login_db_unavailable", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )
 
 
 @router.get("/me", response_model=UserResponse)

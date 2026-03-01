@@ -9,8 +9,11 @@ Every action passes through the compliance gate first.
 Content creation additionally goes through policy validation and platform dispatch.
 """
 
+import json
+from collections import OrderedDict
 from typing import Any
 
+import httpx
 import structlog
 from langgraph.graph import END, StateGraph
 
@@ -34,10 +37,13 @@ from orchestra.agents.platform_agent import execute_platform_action
 from orchestra.agents.policy import validate_content_policy
 from orchestra.agents.safety import check_safety, cleanup_trace
 from orchestra.agents.trace import ExecutionTrace, TraceTimer
+from orchestra.config import get_settings
+from orchestra.core.cost_router import ModelTier, TaskComplexity, route_model
 from orchestra.core.exceptions import AgentLoopError, AgentTimeoutError
 
 logger = structlog.get_logger("agent.orchestrator")
 
+# Keyword table kept as the fallback when all LLM providers are unreachable.
 INTENT_KEYWORDS: dict[str, IntentType] = {
     "create campaign": IntentType.CREATE_CAMPAIGN,
     "new campaign": IntentType.CREATE_CAMPAIGN,
@@ -59,19 +65,182 @@ INTENT_KEYWORDS: dict[str, IntentType] = {
     "spend": IntentType.REALLOCATE_BUDGET,
 }
 
+_VALID_INTENTS = {it.value for it in IntentType}
 
-def classify_intent(state: OrchestratorState) -> OrchestratorState:
-    """Classify user input into an IntentType (keyword-based, LLM upgrade later)."""
-    user_input = state.user_input.lower()
+_CLASSIFY_PROMPT = (
+    "You are an intent classifier for a marketing automation platform.\n"
+    "Classify the user's message into exactly ONE of these intents:\n\n"
+    "{intent_list}\n\n"
+    "User message: \"{user_input}\"\n\n"
+    "Respond with ONLY the intent value (e.g. publish_content). No explanation."
+)
 
+# ---- In-memory LRU cache for recent classifications ----
+
+_CACHE_MAX_SIZE = 256
+_intent_cache: OrderedDict[str, IntentType] = OrderedDict()
+
+
+def _cache_get(key: str) -> IntentType | None:
+    if key in _intent_cache:
+        _intent_cache.move_to_end(key)
+        return _intent_cache[key]
+    return None
+
+
+def _cache_put(key: str, intent: IntentType) -> None:
+    _intent_cache[key] = intent
+    _intent_cache.move_to_end(key)
+    while len(_intent_cache) > _CACHE_MAX_SIZE:
+        _intent_cache.popitem(last=False)
+
+
+def clear_intent_cache() -> None:
+    """Exposed for tests."""
+    _intent_cache.clear()
+
+
+# ---- LLM-based classification ----
+
+def _build_classify_prompt(user_input: str) -> str:
+    intent_list = "\n".join(f"- {it.value}" for it in IntentType)
+    return _CLASSIFY_PROMPT.format(intent_list=intent_list, user_input=user_input)
+
+
+def _parse_intent_response(text: str) -> IntentType | None:
+    """Extract an IntentType from the LLM's response text."""
+    cleaned = text.strip().strip('"').strip("'").lower()
+    if cleaned in _VALID_INTENTS:
+        return IntentType(cleaned)
+    for intent_val in _VALID_INTENTS:
+        if intent_val in cleaned:
+            return IntentType(intent_val)
+    return None
+
+
+async def _classify_via_openai(api_key: str, model: str, prompt: str) -> str | None:
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 30,
+                    "temperature": 0.0,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        logger.warning("classify_openai_failed", error=str(e))
+        return None
+
+
+async def _classify_via_anthropic(api_key: str, model: str, prompt: str) -> str | None:
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "max_tokens": 30,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        logger.warning("classify_anthropic_failed", error=str(e))
+        return None
+
+
+async def _classify_via_ollama(base_url: str, model: str, prompt: str) -> str | None:
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                f"{base_url}/api/generate",
+                json={"model": model, "prompt": prompt, "stream": False},
+            )
+            resp.raise_for_status()
+            return resp.json().get("response", "").strip()
+    except Exception as e:
+        logger.warning("classify_ollama_failed", error=str(e))
+        return None
+
+
+async def _classify_with_llm(user_input: str) -> IntentType | None:
+    """Try LLM classification using the cost router's SIMPLE tier.
+
+    Falls through OpenAI -> Anthropic -> Ollama. Returns None if every
+    provider fails so the caller can fall back to keyword matching.
+    """
+    model_name, tier = route_model(TaskComplexity.SIMPLE)
+    prompt = _build_classify_prompt(user_input)
+    settings = get_settings()
+
+    providers: list[tuple[str, Any]] = []
+    if tier == ModelTier.FAST and settings.has_openai:
+        providers.append(("openai", lambda: _classify_via_openai(
+            settings.openai_api_key.get_secret_value(), model_name, prompt)))
+    if settings.has_anthropic:
+        providers.append(("anthropic", lambda: _classify_via_anthropic(
+            settings.anthropic_api_key.get_secret_value(), settings.default_capable_model, prompt)))
+    providers.append(("ollama", lambda: _classify_via_ollama(
+        settings.ollama_base_url, settings.default_local_model, prompt)))
+
+    for provider_name, call_fn in providers:
+        raw = await call_fn()
+        if raw is not None:
+            intent = _parse_intent_response(raw)
+            if intent is not None:
+                logger.info("intent_classified_llm", intent=intent.value, provider=provider_name)
+                return intent
+            logger.debug("llm_response_unparseable", provider=provider_name, raw=raw)
+
+    return None
+
+
+def _classify_with_keywords(user_input: str) -> IntentType:
+    """Original keyword-based fallback."""
+    lower = user_input.lower()
     for keyword, intent in INTENT_KEYWORDS.items():
-        if keyword in user_input:
-            state.intent = intent
-            break
+        if keyword in lower:
+            return intent
+    return IntentType.GET_ANALYTICS
 
-    if state.intent is None:
-        state.intent = IntentType.GET_ANALYTICS
 
+async def classify_intent(state: OrchestratorState) -> OrchestratorState:
+    """Classify user input into an IntentType.
+
+    1. Check in-memory cache for identical input.
+    2. Try LLM classification (SIMPLE tier via cost router).
+    3. Fall back to keyword matching if LLM is unavailable or unparseable.
+    """
+    user_input = state.user_input
+
+    cached = _cache_get(user_input)
+    if cached is not None:
+        logger.debug("intent_cache_hit", intent=cached.value)
+        state.intent = cached
+        state.current_agent = AgentRole.COMPLIANCE
+        state.depth += 1
+        return state
+
+    intent = await _classify_with_llm(user_input)
+
+    if intent is None:
+        intent = _classify_with_keywords(user_input)
+        logger.info("intent_classified_keyword_fallback", intent=intent.value)
+
+    _cache_put(user_input, intent)
+    state.intent = intent
     state.current_agent = AgentRole.COMPLIANCE
     state.depth += 1
     return state
@@ -312,7 +481,7 @@ async def analytics_node(state: OrchestratorState) -> OrchestratorState:
         include_insights=True,
     )
 
-    result = await run_analytics(request, trace)
+    result = await run_analytics(request, trace, tenant_id=state.tenant_id)
     state.analytics_result = result
     state.depth += 1
     return state

@@ -10,9 +10,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from orchestra.api.middleware.auth_context import AuthContextMiddleware
 from orchestra.api.middleware.audit import AuditLogMiddleware
 from orchestra.api.middleware.rate_limit import RateLimitMiddleware
-from orchestra.api.routes import audit, auth, gdpr, health, kill_switch, orchestrator, platforms
+from orchestra.api.routes import (
+    analytics,
+    audit,
+    auth,
+    campaigns,
+    gdpr,
+    health,
+    kill_switch,
+    orchestrator,
+    platforms,
+    reports,
+)
 from orchestra.config import get_settings
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
@@ -77,9 +89,11 @@ app = FastAPI(
 )
 
 # --- Middleware (order matters: last added = first executed) ---
+# Execution order: CORS -> AuthContext -> Audit -> RateLimit -> Route handler
 
 app.add_middleware(RateLimitMiddleware, requests_per_minute=settings.rate_limit_per_minute)
 app.add_middleware(AuditLogMiddleware)
+app.add_middleware(AuthContextMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -137,6 +151,9 @@ async def global_exception_handler(request: Request, exc: Exception) -> ORJSONRe
 
 app.include_router(health.router)
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(campaigns.router, prefix="/api/v1")
+app.include_router(analytics.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
 app.include_router(platforms.router, prefix="/api/v1")
 app.include_router(orchestrator.router, prefix="/api/v1")
 app.include_router(gdpr.router, prefix="/api/v1")
