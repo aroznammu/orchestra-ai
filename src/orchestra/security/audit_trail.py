@@ -209,7 +209,7 @@ class AuditTrail:
         limit: int = 100,
         offset: int = 0,
     ) -> list[AuditEntry]:
-        """Query audit entries with filters."""
+        """Query audit entries from in-memory cache (sync fallback)."""
         entries = [e for e in self._entries if e.tenant_id == tenant_id]
 
         if category:
@@ -223,6 +223,69 @@ class AuditTrail:
 
         entries.sort(key=lambda e: e.timestamp, reverse=True)
         return entries[offset: offset + limit]
+
+    async def query_db(
+        self,
+        tenant_id: str,
+        category: str | None = None,
+        action: str | None = None,
+        outcome: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[AuditEntry]:
+        """Query audit entries from PostgreSQL, falling back to in-memory."""
+        try:
+            from sqlalchemy import select, desc
+            from orchestra.db.models import AuditLog
+            from orchestra.db.session import async_session_factory
+
+            tid = _safe_uuid(tenant_id)
+            if tid is None:
+                raise ValueError("invalid tenant_id for DB query")
+
+            async with async_session_factory() as session:
+                stmt = select(AuditLog).where(AuditLog.tenant_id == tid)
+                if action:
+                    stmt = stmt.where(AuditLog.action == action)
+                stmt = stmt.order_by(desc(AuditLog.created_at)).offset(offset).limit(limit)
+                result = await session.execute(stmt)
+                rows = result.scalars().all()
+
+            entries = []
+            for row in rows:
+                details = row.details or {}
+                entries.append(AuditEntry(
+                    id=str(row.id),
+                    tenant_id=str(row.tenant_id) if row.tenant_id else tenant_id,
+                    user_id=str(row.user_id) if row.user_id else None,
+                    action=row.action,
+                    category=details.get("category", row.resource_type),
+                    resource_type=row.resource_type,
+                    resource_id=row.resource_id,
+                    details=details,
+                    reasoning=details.get("reasoning", ""),
+                    outcome=details.get("outcome", "success"),
+                    risk_score=details.get("risk_score", 0.0),
+                    ip_address=row.ip_address,
+                    timestamp=row.created_at.isoformat() if row.created_at else "",
+                ))
+
+            if category:
+                entries = [e for e in entries if e.category == category]
+            if outcome:
+                entries = [e for e in entries if e.outcome == outcome]
+
+            return entries
+        except Exception as e:
+            logger.debug("audit_db_read_fallback", error=str(e))
+            return self.query(
+                tenant_id=tenant_id,
+                category=category,
+                action=action,
+                outcome=outcome,
+                limit=limit,
+                offset=offset,
+            )
 
     def get_financial_summary(
         self,

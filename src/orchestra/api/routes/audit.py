@@ -23,11 +23,11 @@ async def get_audit_log(
     offset: int = Query(default=0, ge=0),
     user: CurrentUser = None,
 ) -> dict[str, Any]:
-    """Query audit log entries."""
+    """Query audit log entries from PostgreSQL (falls back to in-memory)."""
     check_permission(user.role, Permission.AUDIT_VIEW)
 
     trail = get_audit_trail()
-    entries = trail.query(
+    entries = await trail.query_db(
         tenant_id=user.tenant_id,
         category=category,
         action=action,

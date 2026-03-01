@@ -70,6 +70,14 @@ class Settings(BaseSettings):
     qdrant_host: str = "qdrant"
     qdrant_port: int = 6333
 
+    @property
+    def qdrant_url(self) -> str:
+        return f"http://{self.qdrant_host}:{self.qdrant_port}"
+
+    @property
+    def ollama_url(self) -> str:
+        return self.ollama_base_url
+
     # Security
     jwt_secret_key: SecretStr = SecretStr("CHANGE-ME-generate-with-openssl-rand-hex-32")
     jwt_algorithm: str = "HS256"
