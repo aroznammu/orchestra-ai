@@ -21,7 +21,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 
 const PLAN_ACCENT: Record<string, { border: string; bg: string; badge: string }> = {
   starter: {
@@ -131,6 +131,20 @@ function PlanCard({
 }
 
 export default function BillingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+        </div>
+      }
+    >
+      <BillingContent />
+    </Suspense>
+  );
+}
+
+function BillingContent() {
   const searchParams = useSearchParams();
   const checkoutStatus = searchParams.get("status");
   const [loading, setLoading] = useState<string | null>(null);
