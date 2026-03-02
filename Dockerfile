@@ -26,7 +26,8 @@ COPY src/ ./src/
 COPY alembic.ini* ./
 COPY pyproject.toml ./
 
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app/src \
+    PORT=8000
 
 RUN poetry install --only main
 
@@ -35,4 +36,4 @@ USER orchestra
 
 EXPOSE 8000
 
-CMD ["uvicorn", "orchestra.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["sh", "-c", "uvicorn orchestra.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 4"]

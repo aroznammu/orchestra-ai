@@ -65,6 +65,9 @@ passlib = {extras = ["bcrypt"], version = "^1.7"}
 # Scheduling
 apscheduler = "^3.10"
 
+# Billing
+stripe = ">=7.0"
+
 # Utilities
 python-multipart = "^0.0.18"
 python-dotenv = "^1.0"

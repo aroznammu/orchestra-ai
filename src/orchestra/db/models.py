@@ -111,6 +111,12 @@ class Tenant(TimestampMixin, Base):
     daily_spend_cap: Mapped[float] = mapped_column(Float, default=100.0)
     monthly_spend_cap: Mapped[float] = mapped_column(Float, default=3000.0)
 
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    subscription_status: Mapped[str] = mapped_column(String(50), default="trialing")
+    subscription_plan: Mapped[str] = mapped_column(String(50), default="free")
+    plan_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     users: Mapped[list["User"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="tenant", cascade="all, delete-orphan")
     platform_connections: Mapped[list["PlatformConnection"]] = relationship(

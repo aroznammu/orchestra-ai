@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     fernet_key: SecretStr = SecretStr("CHANGE-ME-generate-with-python-cryptography-fernet")
     encryption_key: SecretStr = SecretStr("CHANGE-ME-generate-aes-256-key")
 
+    # Stripe billing
+    stripe_secret_key: SecretStr = SecretStr("")
+    stripe_webhook_secret: SecretStr = SecretStr("")
+    stripe_starter_price_id: str = ""
+    stripe_agency_price_id: str = ""
+    frontend_url: str = "http://localhost:3000"
+
     # Rate limiting
     rate_limit_per_minute: int = 60
 

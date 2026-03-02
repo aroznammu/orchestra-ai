@@ -17,6 +17,7 @@ from orchestra.api.routes import (
     analytics,
     audit,
     auth,
+    billing,
     campaigns,
     gdpr,
     health,
@@ -94,9 +95,14 @@ app = FastAPI(
 app.add_middleware(RateLimitMiddleware, requests_per_minute=settings.rate_limit_per_minute)
 app.add_middleware(AuditLogMiddleware)
 app.add_middleware(AuthContextMiddleware)
+_cors_origins: list[str] = list(settings.cors_origins)
+for _origin in ("http://localhost:3000", settings.frontend_url):
+    if _origin and _origin not in _cors_origins:
+        _cors_origins.append(_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -156,6 +162,7 @@ app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(platforms.router, prefix="/api/v1")
 app.include_router(orchestrator.router, prefix="/api/v1")
+app.include_router(billing.router, prefix="/api/v1")
 app.include_router(gdpr.router, prefix="/api/v1")
 app.include_router(audit.router, prefix="/api/v1")
 app.include_router(kill_switch.router, prefix="/api/v1")

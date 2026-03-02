@@ -278,6 +278,40 @@ docker compose up -d
 pytest
 ```
 
+## Enterprise Cloud Edition
+
+Love OrchestraAI but your team has outgrown the CLI? The **Enterprise Cloud Edition**
+is a fully managed SaaS layer built on top of this open-source core -- designed for
+agencies and corporate marketing teams that need collaboration, compliance, and
+zero-ops infrastructure.
+
+| | Community (This Repo) | Enterprise Cloud |
+|---|:---:|:---:|
+| **9 Platform Connectors** | :white_check_mark: | :white_check_mark: |
+| **AI Agent Orchestration** | :white_check_mark: | :white_check_mark: |
+| **Guardrailed Bidding & Risk Containment** | :white_check_mark: | :white_check_mark: |
+| **Cross-Platform Intelligence** | :white_check_mark: | :white_check_mark: |
+| **Interface** | CLI + API | Web Dashboard + CLI + API |
+| **Hosting** | Self-hosted (Docker) | Fully managed cloud |
+| **SSO / SAML** | -- | :white_check_mark: |
+| **Multi-player RBAC** | API-level | Visual team management |
+| **Advanced Analytics Dashboards** | -- | :white_check_mark: |
+| **White-Label for Agencies** | -- | :white_check_mark: |
+| **Managed LLM Key Proxying** | -- | :white_check_mark: |
+| **SOC 2 Compliance & SLA** | -- | :white_check_mark: |
+| **Priority Support** | Community | Dedicated |
+| **License** | Apache 2.0 | Commercial |
+
+**Who is it for?**
+
+- **Agencies** managing 10+ client accounts who need white-labeled dashboards and team permissions.
+- **Marketing directors** who need SOC 2 compliance reports and guaranteed uptime SLAs.
+- **Teams** that want the power of OrchestraAI without managing Docker, Postgres, and API keys.
+
+The open-source core is the full engine -- the Enterprise Cloud adds the cockpit.
+
+> Interested in early access? Reach out at **enterprise@orchestraai.dev**
+
 ## License
 
 [Apache License 2.0](LICENSE) -- use it commercially, modify it, distribute it.

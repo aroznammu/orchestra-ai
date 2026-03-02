@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from orchestra.api.deps import CurrentUser, DbSession
+from orchestra.api.deps import CurrentUser, DbSession, PaidUser
 from orchestra.db.models import Campaign, CampaignPost, CampaignStatus, PlatformType
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
@@ -126,7 +126,7 @@ async def _get_tenant_campaign(
 @router.post("", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
 async def create_campaign(
     body: CampaignCreate,
-    current_user: CurrentUser,
+    current_user: PaidUser,
     db: DbSession,
 ) -> CampaignResponse:
     campaign = Campaign(
@@ -213,7 +213,7 @@ async def update_campaign(
 @router.post("/{campaign_id}/launch", response_model=CampaignResponse)
 async def launch_campaign(
     campaign_id: str,
-    current_user: CurrentUser,
+    current_user: PaidUser,
     db: DbSession,
 ) -> CampaignResponse:
     campaign = await _get_tenant_campaign(db, campaign_id, current_user.tenant_id)
@@ -234,7 +234,7 @@ async def launch_campaign(
 @router.post("/{campaign_id}/pause", response_model=CampaignResponse)
 async def pause_campaign(
     campaign_id: str,
-    current_user: CurrentUser,
+    current_user: PaidUser,
     db: DbSession,
 ) -> CampaignResponse:
     campaign = await _get_tenant_campaign(db, campaign_id, current_user.tenant_id)
