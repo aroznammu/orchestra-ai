@@ -30,6 +30,8 @@ class OrchestrateResponse(BaseModel):
     optimization: dict[str, Any] | None = None
     policy: dict[str, Any] | None = None
     platform: dict[str, Any] | None = None
+    video: dict[str, Any] | None = None
+    video_compliance: dict[str, Any] | None = None
 
 
 def _serialize(obj: Any) -> Any:

@@ -20,6 +20,8 @@ class AgentRole(str, Enum):
     OPTIMIZER = "optimizer"
     ANALYTICS = "analytics"
     PLATFORM = "platform"
+    VIDEO = "video"
+    VISUAL_COMPLIANCE = "visual_compliance"
 
 
 class IntentType(str, Enum):
@@ -32,6 +34,7 @@ class IntentType(str, Enum):
     CONNECT_PLATFORM = "connect_platform"
     CHECK_COMPLIANCE = "check_compliance"
     REALLOCATE_BUDGET = "reallocate_budget"
+    GENERATE_VIDEO = "generate_video"
 
 
 class TaskStatus(str, Enum):
@@ -182,6 +185,25 @@ class PolicyCheckResult(BaseModel):
     platform: str = ""
 
 
+class VideoGenerationResult(BaseModel):
+    """Result from video generation service."""
+
+    video_url: str = ""
+    duration: float = 0.0
+    model_used: str = ""
+    thumbnail_url: str = ""
+    prompt_used: str = ""
+
+
+class VisualComplianceResult(BaseModel):
+    """Result from visual compliance gate."""
+
+    safe: bool = True
+    violations: list[dict[str, Any]] = Field(default_factory=list)
+    scanned_frames: int = 0
+    video_url: str = ""
+
+
 class OrchestratorState(BaseModel):
     """Full state for the LangGraph orchestrator."""
 
@@ -195,6 +217,8 @@ class OrchestratorState(BaseModel):
     optimization_result: OptimizationResult | None = None
     analytics_result: AnalyticsResult | None = None
     platform_result: PlatformActionResult | None = None
+    video_result: VideoGenerationResult | None = None
+    visual_compliance_result: VisualComplianceResult | None = None
     current_agent: AgentRole = AgentRole.ORCHESTRATOR
     depth: int = 0
     max_depth: int = 10

@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     fernet_key: SecretStr = SecretStr("CHANGE-ME-generate-with-python-cryptography-fernet")
     encryption_key: SecretStr = SecretStr("CHANGE-ME-generate-aes-256-key")
 
+    # Video generation (fal.ai)
+    fal_api_key: SecretStr = SecretStr("")
+
+    @property
+    def has_fal(self) -> bool:
+        return bool(self.fal_api_key.get_secret_value())
+
     # Stripe billing
     stripe_secret_key: SecretStr = SecretStr("")
     stripe_webhook_secret: SecretStr = SecretStr("")

@@ -12,10 +12,12 @@ import {
   Loader2,
   Scale,
   Send,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   TrendingUp,
   User,
+  Video,
   XCircle,
   Zap,
 } from "lucide-react";
@@ -28,7 +30,7 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from "react"
 // ---------------------------------------------------------------------------
 
 interface SectionData {
-  kind: "content" | "analytics" | "compliance" | "optimization" | "policy" | "platform" | "text";
+  kind: "content" | "analytics" | "compliance" | "optimization" | "policy" | "platform" | "video" | "video_compliance" | "text";
   data: Record<string, unknown>;
 }
 
@@ -68,6 +70,8 @@ function buildAssistantMessage(res: OrchestrateResponse): ChatMessage {
     { kind: "compliance", value: res.compliance },
     { kind: "analytics", value: res.analytics },
     { kind: "content", value: res.content },
+    { kind: "video", value: res.video },
+    { kind: "video_compliance", value: res.video_compliance },
     { kind: "optimization", value: res.optimization },
     { kind: "policy", value: res.policy },
     { kind: "platform", value: res.platform },
@@ -136,6 +140,16 @@ const SECTION_META: Record<
     label: "Platform Result",
     icon: <Globe className="h-3.5 w-3.5" />,
     accent: "border-sky-500/40 bg-sky-500/5",
+  },
+  video: {
+    label: "Generated Video",
+    icon: <Video className="h-3.5 w-3.5" />,
+    accent: "border-fuchsia-500/40 bg-fuchsia-500/5",
+  },
+  video_compliance: {
+    label: "Visual Compliance",
+    icon: <ShieldAlert className="h-3.5 w-3.5" />,
+    accent: "border-red-500/40 bg-red-500/5",
   },
   text: {
     label: "Details",
@@ -457,6 +471,111 @@ function PlatformSection({ data }: { data: Record<string, unknown> }) {
   return <KeyValueTable data={data} />;
 }
 
+function VideoSection({ data }: { data: Record<string, unknown> }) {
+  const videoUrl = data.video_url as string | undefined;
+  const duration = data.duration as number | undefined;
+  const modelUsed = data.model_used as string | undefined;
+  const promptUsed = data.prompt_used as string | undefined;
+
+  if (!videoUrl) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <Video className="h-3.5 w-3.5" />
+        No video was generated (API key missing or generation failed).
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-lg border border-zinc-700/50 bg-black">
+        <video
+          src={videoUrl}
+          controls
+          className="w-full"
+          preload="metadata"
+          style={{ maxHeight: "400px" }}
+        />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {typeof duration === "number" && duration > 0 && (
+          <div className="rounded-lg border border-zinc-700/40 bg-zinc-800/40 px-3 py-1.5">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Duration</p>
+            <p className="text-sm font-semibold text-zinc-200">{duration}s</p>
+          </div>
+        )}
+        {modelUsed && (
+          <div className="rounded-lg border border-zinc-700/40 bg-zinc-800/40 px-3 py-1.5">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">Model</p>
+            <p className="text-sm font-semibold text-zinc-200">{modelUsed.split("/").pop()}</p>
+          </div>
+        )}
+      </div>
+      {promptUsed && (
+        <p className="text-xs italic text-zinc-500">Prompt: {promptUsed}</p>
+      )}
+    </div>
+  );
+}
+
+function VideoComplianceSection({ data }: { data: Record<string, unknown> }) {
+  const safe = data.safe as boolean | undefined;
+  const violations = data.violations as Array<Record<string, unknown>> | undefined;
+  const scannedFrames = data.scanned_frames as number | undefined;
+
+  if (safe !== false) {
+    return (
+      <div className="flex items-center gap-2 text-xs font-medium text-emerald-400">
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        Visual compliance check passed
+        {typeof scannedFrames === "number" && (
+          <span className="font-normal text-zinc-500">({scannedFrames} frames scanned)</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/30 px-3 py-2">
+        <ShieldAlert className="h-5 w-5 shrink-0 text-red-400" />
+        <div>
+          <p className="text-sm font-semibold text-red-300">
+            Video Blocked: Potential Copyright/IP Violation Detected
+          </p>
+          <p className="text-xs text-red-400/70">
+            The generated video was blocked before delivery.
+            {typeof scannedFrames === "number" && ` ${scannedFrames} keyframes were analyzed.`}
+          </p>
+        </div>
+      </div>
+      {violations && violations.length > 0 && (
+        <ul className="space-y-2">
+          {violations.map((v, i) => (
+            <li
+              key={i}
+              className="flex gap-2 rounded-lg border border-red-800/30 bg-red-950/20 px-3 py-2"
+            >
+              <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
+              <div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400">
+                  {(v.type as string) ?? "violation"}
+                </span>
+                {v.confidence != null && (
+                  <span className="ml-2 text-[10px] text-zinc-500">
+                    ({((v.confidence as number) * 100).toFixed(0)}% confidence)
+                  </span>
+                )}
+                <p className="text-xs text-zinc-300">{(v.description as string) ?? ""}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function KeyValueTable({
   data,
   exclude = [],
@@ -510,6 +629,8 @@ function SectionCard({ section }: { section: SectionData }) {
       {section.kind === "optimization" && <OptimizationSection data={section.data} />}
       {section.kind === "policy" && <PolicySection data={section.data} />}
       {section.kind === "platform" && <PlatformSection data={section.data} />}
+      {section.kind === "video" && <VideoSection data={section.data} />}
+      {section.kind === "video_compliance" && <VideoComplianceSection data={section.data} />}
       {section.kind === "text" && <KeyValueTable data={section.data} />}
     </div>
   );
@@ -599,7 +720,7 @@ const WELCOME_SUGGESTIONS = [
   "What campaigns are running right now?",
   "Analyze my Instagram performance",
   "Create a Twitter thread about AI trends",
-  "Pause all campaigns with low ROI",
+  "Generate a video ad for our summer sale",
 ];
 
 export default function OrchestratorPage() {

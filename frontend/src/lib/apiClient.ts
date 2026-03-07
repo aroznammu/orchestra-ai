@@ -167,6 +167,8 @@ export interface OrchestrateResponse {
   optimization: Record<string, unknown> | null;
   policy: Record<string, unknown> | null;
   platform: Record<string, unknown> | null;
+  video: Record<string, unknown> | null;
+  video_compliance: Record<string, unknown> | null;
 }
 
 // ---------------------------------------------------------------------------

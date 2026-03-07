@@ -1,12 +1,13 @@
 """LangGraph Orchestrator -- the main AI agent workflow.
 
 Routes user intents through a directed graph of specialized agents:
-  classify -> compliance -> route -> [content -> policy -> platform] -> respond
+  classify -> compliance -> route -> [content -> video -> visual_compliance -> policy -> platform] -> respond
                                   -> [analytics] -> respond
                                   -> [optimize] -> respond
 
 Every action passes through the compliance gate first.
-Content creation additionally goes through policy validation and platform dispatch.
+Content creation additionally goes through video generation (conditional), visual
+compliance scanning, policy validation, and platform dispatch.
 """
 
 import json
@@ -40,6 +41,8 @@ from orchestra.agents.trace import ExecutionTrace, TraceTimer
 from orchestra.config import get_settings
 from orchestra.core.cost_router import ModelTier, TaskComplexity, route_model
 from orchestra.core.exceptions import AgentLoopError, AgentTimeoutError
+from orchestra.core.video_service import generate_video
+from orchestra.core.visual_compliance import check_visual_compliance
 
 logger = structlog.get_logger("agent.orchestrator")
 
@@ -63,6 +66,10 @@ INTENT_KEYWORDS: dict[str, IntentType] = {
     "check": IntentType.CHECK_COMPLIANCE,
     "budget": IntentType.REALLOCATE_BUDGET,
     "spend": IntentType.REALLOCATE_BUDGET,
+    "video ad": IntentType.GENERATE_VIDEO,
+    "video": IntentType.GENERATE_VIDEO,
+    "generate video": IntentType.GENERATE_VIDEO,
+    "video clip": IntentType.GENERATE_VIDEO,
 }
 
 _VALID_INTENTS = {it.value for it in IntentType}
@@ -284,7 +291,12 @@ def route_after_compliance(state: OrchestratorState) -> str:
         return "respond"
 
     intent = state.intent
-    if intent in (IntentType.PUBLISH_CONTENT, IntentType.SCHEDULE_CONTENT, IntentType.CREATE_CAMPAIGN):
+    if intent in (
+        IntentType.PUBLISH_CONTENT,
+        IntentType.SCHEDULE_CONTENT,
+        IntentType.CREATE_CAMPAIGN,
+        IntentType.GENERATE_VIDEO,
+    ):
         return "content_node"
     elif intent in (IntentType.GET_ANALYTICS, IntentType.GENERATE_REPORT):
         return "analytics_node"
@@ -512,6 +524,76 @@ async def optimize_node(state: OrchestratorState) -> OrchestratorState:
     return state
 
 
+async def video_node(state: OrchestratorState) -> OrchestratorState:
+    """Generate a video via Seedance if the intent requires it.
+
+    Passes through silently when video generation is not needed.
+    """
+    needs_video = (
+        state.intent == IntentType.GENERATE_VIDEO
+        or "video" in state.user_input.lower()
+    )
+    if not needs_video:
+        state.depth += 1
+        return state
+
+    try:
+        check_safety(state, AgentRole.VIDEO)
+    except (AgentLoopError, AgentTimeoutError) as e:
+        state.error = str(e)
+        state.is_complete = True
+        return state
+
+    prompt = state.raw_payload.get("video_prompt", state.user_input)
+    image_url = state.raw_payload.get("image_url")
+    duration = state.raw_payload.get("video_duration", 5)
+    aspect_ratio = state.raw_payload.get("aspect_ratio", "16:9")
+
+    result = await generate_video(
+        prompt=prompt,
+        image_url=image_url,
+        duration=duration,
+        aspect_ratio=aspect_ratio,
+    )
+    state.video_result = result
+    state.depth += 1
+    return state
+
+
+async def visual_compliance_gate_node(state: OrchestratorState) -> OrchestratorState:
+    """Scan generated video keyframes for copyright/IP violations.
+
+    Passes through when no video was generated.
+    """
+    if not state.video_result or not state.video_result.video_url:
+        state.depth += 1
+        return state
+
+    try:
+        check_safety(state, AgentRole.VISUAL_COMPLIANCE)
+    except (AgentLoopError, AgentTimeoutError) as e:
+        state.error = str(e)
+        state.is_complete = True
+        return state
+
+    result = await check_visual_compliance(
+        video_url=state.video_result.video_url,
+        tenant_id=state.tenant_id,
+    )
+    state.visual_compliance_result = result
+
+    if not result.safe:
+        logger.warning(
+            "video_blocked_by_compliance",
+            violations_count=len(result.violations),
+            tenant_id=state.tenant_id,
+        )
+        state.video_result.video_url = ""
+
+    state.depth += 1
+    return state
+
+
 def respond(state: OrchestratorState) -> OrchestratorState:
     """Build the final response from agent results."""
     state.is_complete = True
@@ -526,6 +608,8 @@ def build_orchestrator_graph() -> StateGraph:
     graph.add_node("classify", classify_intent)
     graph.add_node("compliance_gate", compliance_gate)
     graph.add_node("content_node", content_node)
+    graph.add_node("video_node", video_node)
+    graph.add_node("visual_compliance_gate", visual_compliance_gate_node)
     graph.add_node("policy_node", policy_node)
     graph.add_node("platform_node", platform_node)
     graph.add_node("analytics_node", analytics_node)
@@ -547,7 +631,9 @@ def build_orchestrator_graph() -> StateGraph:
         },
     )
 
-    graph.add_edge("content_node", "policy_node")
+    graph.add_edge("content_node", "video_node")
+    graph.add_edge("video_node", "visual_compliance_gate")
+    graph.add_edge("visual_compliance_gate", "policy_node")
 
     graph.add_conditional_edges(
         "policy_node",
@@ -612,6 +698,12 @@ async def run_orchestrator(
 
     if final_state.get("platform_result"):
         result["platform"] = final_state["platform_result"].model_dump() if hasattr(final_state["platform_result"], "model_dump") else {}
+
+    if final_state.get("video_result"):
+        result["video"] = final_state["video_result"].model_dump()
+
+    if final_state.get("visual_compliance_result"):
+        result["video_compliance"] = final_state["visual_compliance_result"].model_dump()
 
     if final_state.get("analytics_result"):
         result["analytics"] = final_state["analytics_result"].model_dump()

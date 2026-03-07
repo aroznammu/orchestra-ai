@@ -68,6 +68,10 @@ apscheduler = "^3.10"
 # Billing
 stripe = ">=7.0"
 
+# Video generation
+fal-client = ">=0.5"
+ffmpeg-python = ">=0.2"
+
 # Utilities
 python-multipart = "^0.0.18"
 python-dotenv = "^1.0"
