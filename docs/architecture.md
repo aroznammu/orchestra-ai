@@ -25,7 +25,7 @@ graph TB
     end
 
     subgraph Core Services
-        ORCH[LangGraph Orchestrator<br/>8-node StateGraph]
+        ORCH[LangGraph Orchestrator<br/>10-node StateGraph]
         BIDDING[Bidding Engine<br/>3-phase autonomy]
         COST[Cost Router<br/>SIMPLE/MODERATE/COMPLEX]
         SCHED[APScheduler<br/>daily/monthly/hourly jobs]
@@ -76,19 +76,21 @@ graph TB
 
 ## LangGraph Agent Execution Graph
 
-The orchestrator (`src/orchestra/agents/orchestrator.py`) is a compiled `langgraph.graph.StateGraph` with 8 nodes and conditional routing:
+The orchestrator (`src/orchestra/agents/orchestrator.py`) is a compiled `langgraph.graph.StateGraph` with 10 nodes and conditional routing:
 
 ```mermaid
 stateDiagram-v2
     [*] --> classify
     classify --> compliance_gate
 
-    compliance_gate --> content_node : intent ∈ {publish, schedule, create_campaign}
+    compliance_gate --> content_node : intent ∈ {publish, schedule, create_campaign, generate_video}
     compliance_gate --> analytics_node : intent ∈ {get_analytics, generate_report}
     compliance_gate --> optimize_node : intent ∈ {optimize, reallocate_budget}
     compliance_gate --> respond : blocked or check_compliance
 
-    content_node --> policy_node
+    content_node --> video_node
+    video_node --> visual_compliance_gate
+    visual_compliance_gate --> policy_node
     policy_node --> platform_node : valid & (publish | schedule)
     policy_node --> respond : invalid or create_campaign
 
@@ -105,6 +107,8 @@ stateDiagram-v2
 | `classify` | LLM-based intent classification (OpenAI → Anthropic → Ollama) with keyword fallback and in-memory LRU cache (256 entries) | `orchestrator.py:classify_intent` |
 | `compliance_gate` | Pre-action compliance check: prohibited content, targeting rules, budget validation | `compliance.py:run_compliance_check` |
 | `content_node` | LLM content generation via OpenAI/Anthropic/Ollama fallback chain | `content.py:generate_content` |
+| `video_node` | AI video generation via Seedance 2.0 (fal.ai); triggers on `generate_video` intent, supports text-to-video and image-to-video | `core/video_service.py:generate_video` |
+| `visual_compliance_gate` | Extracts keyframes via ffmpeg, scans with GPT-4o Vision for celebrity likenesses, copyrighted characters, and trademarked logos | `core/visual_compliance.py:check_visual_compliance` |
 | `policy_node` | Platform-specific policy validation: character limits, hashtag rules, media constraints | `policy.py:validate_content_policy` |
 | `platform_node` | Dispatch publish/schedule action to the appropriate platform connector | `platform_agent.py:execute_platform_action` |
 | `analytics_node` | Cross-platform metrics aggregation with real connector calls and benchmark comparison | `analytics_agent.py:run_analytics` |
@@ -197,15 +201,27 @@ The `route_model(complexity, prefer_local)` function selects models by `TaskComp
 | `MODERATE` | OpenAI `gpt-4o-mini` | Anthropic → Ollama | Content generation, analytics insights |
 | `COMPLEX` | Anthropic `claude-3.5-sonnet` | OpenAI → Ollama | Strategy, multi-step reasoning |
 
-### Tiered Video Pipeline
+### Video Generation Pipeline
 
-The `route_video()` function implements 3 tiers:
+Video generation uses ByteDance **Seedance 2.0** via the fal.ai API (`src/orchestra/core/video_service.py`):
 
-| Tier | Primary Model | Fallback | Cost/min | Trigger |
-|------|--------------|----------|----------|---------|
-| `DRAFT` | Runway Gen-3 Alpha Turbo | Kling v1 | $0.05 | Default for all new content |
-| `UPSCALE` | Sora v1 | Veo v2 | $0.50 | Validated A/B test winners only |
-| `BYOK` | Tenant-provided | — | $0.00 | Tenant supplies own API key |
+| Mode | Model ID | Cost | Output |
+|------|----------|------|--------|
+| Text-to-video | `fal-ai/bytedance/seedance/v1.5/pro/text-to-video` | ~$0.26 per 5s 720p clip | MP4 video from a text prompt |
+| Image-to-video | `fal-ai/bytedance/seedance/v1/pro/image-to-video` | ~$0.26 per 5s 720p clip | MP4 video from a reference image + prompt |
+
+Requires `FAL_API_KEY` in the environment. When the key is absent, the video node is a no-op passthrough.
+
+### Visual Compliance Gate
+
+Every generated video passes through an automated IP/copyright scanner (`src/orchestra/core/visual_compliance.py`) before reaching the user:
+
+1. **Download** the generated MP4 to a temp directory
+2. **Extract keyframes** -- ffmpeg extracts 4 evenly-spaced frames
+3. **Scan with GPT-4o Vision** -- frames are base64-encoded and sent with a strict system prompt that checks for celebrity likenesses, copyrighted characters/IP, and trademarked logos
+4. **Pass/Block** -- if zero violations are found the video URL passes through; otherwise the video is blocked and violations are returned to the frontend
+
+Cost: ~$0.01--0.03 per scan (one GPT-4o Vision call with 4 image inputs).
 
 ---
 

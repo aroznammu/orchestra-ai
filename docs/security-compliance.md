@@ -285,3 +285,34 @@ graph TB
     FERNET --> QD["Qdrant<br/>Namespaced vectors"]
     RL --> REDIS["Redis<br/>Rate counters"]
 ```
+
+---
+
+## 10. Visual Compliance Gate
+
+Generated video content is automatically scanned for intellectual property violations before delivery to the user.
+
+### Pipeline
+
+1. **Keyframe extraction** -- ffmpeg extracts 4 evenly-spaced frames from each generated video (temp files are deleted after scanning)
+2. **GPT-4o Vision scan** -- Frames are base64-encoded and sent to GPT-4o with a strict system prompt that checks three categories:
+   - **Celebrity likenesses** -- faces resembling public figures
+   - **Copyrighted characters** -- cartoon, anime, or movie characters
+   - **Trademarked logos** -- brand logos, product packaging, or distinctive trade dress
+3. **Pass/Block decision** -- If zero violations are detected, the video URL is passed through to the frontend. If any violation is found, the video URL is withheld and the violation details (category, description, confidence) are returned instead.
+
+### Implementation
+
+| Component | File |
+|-----------|------|
+| Compliance logic | `src/orchestra/core/visual_compliance.py` |
+| LangGraph integration | `visual_compliance_gate_node` in `src/orchestra/agents/orchestrator.py` |
+| State model | `VisualComplianceResult` in `src/orchestra/agents/contracts.py` |
+| Frontend rendering | Violation card in `frontend/src/app/orchestrator/page.tsx` |
+
+### Security Properties
+
+- **Conservative by default** -- the scanner errs on the side of blocking; ambiguous content is flagged rather than passed
+- **No video storage** -- keyframes are extracted to temp files and deleted immediately after scanning; the platform does not persist generated video content
+- **Tenant-scoped logging** -- every scan result (pass or block) is logged with the tenant ID for auditability
+- **Graceful degradation** -- if the Vision API is unreachable, the scan fails safe (video is blocked, not passed through)

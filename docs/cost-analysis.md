@@ -130,40 +130,35 @@ Embedding costs are negligible at any scale. At 100K campaigns/month with OpenAI
 
 ---
 
-## Tiered Video Pipeline Costs
+## Video Generation Costs
 
-The video pipeline (`src/orchestra/core/cost_router.py:route_video()`) uses a 3-tier model:
+Video generation uses ByteDance **Seedance 2.0** via fal.ai (`src/orchestra/core/video_service.py`).
 
-### Draft Tier (Bulk Variations)
+### Seedance 2.0 Pricing
 
-| Model | Cost per Minute | 30-sec clip | Use Case |
-|-------|----------------|-------------|----------|
-| Runway Gen-3 Alpha Turbo | $0.05 | $0.025 | Rapid prototyping, A/B test variants |
-| Kling v1 (fallback) | $0.05 | $0.025 | Backup when Runway is unavailable |
+| Mode | Resolution | Duration | Cost per Clip |
+|------|-----------|----------|---------------|
+| Text-to-video | 720p | 5 seconds | ~$0.26 |
+| Image-to-video | 720p | 5 seconds | ~$0.26 |
 
-### Upscale Tier (Validated Winners)
+### Visual Compliance Gate Cost
 
-| Model | Cost per Minute | 30-sec clip | Use Case |
-|-------|----------------|-------------|----------|
-| Sora v1 | $0.50 | $0.25 | Final production quality for proven content |
-| Veo v2 (fallback) | $0.50 | $0.25 | Backup when Sora is unavailable |
+Every generated video is scanned by the Visual Compliance Gate (`src/orchestra/core/visual_compliance.py`) which extracts 4 keyframes and sends them to GPT-4o Vision:
 
-### BYOK Tier (Bring Your Own Key)
-
-| Model | Cost per Minute | Use Case |
-|-------|----------------|----------|
-| Tenant-provided | $0.00 | Enterprise tenants with unlimited API subscriptions |
+| Component | Cost per Scan |
+|-----------|---------------|
+| GPT-4o Vision (4 keyframes) | ~$0.01--0.03 |
 
 ### Video Cost Projections
 
-| Monthly Videos | Draft Only | 80% Draft + 20% Upscale | BYOK |
-|---------------|-----------|-------------------------|------|
-| 50 (30-sec each) | $1.25 | $3.50 | $0.00 |
-| 500 | $12.50 | $35.00 | $0.00 |
-| 5,000 | $125.00 | $350.00 | $0.00 |
-| 50,000 | $1,250.00 | $3,500.00 | $0.00 |
+| Monthly Videos | Generation (Seedance) | Compliance Scans | Total |
+|---------------|----------------------|-----------------|-------|
+| 50 | $13.00 | $1.00 | $14.00 |
+| 500 | $130.00 | $10.00 | $140.00 |
+| 5,000 | $1,300.00 | $100.00 | $1,400.00 |
+| 50,000 | $13,000.00 | $1,000.00 | $14,000.00 |
 
-The tiered approach saves 90% on video costs by only upscaling validated A/B test winners.
+fal.ai charges are usage-based with no monthly minimum. Compliance scanning adds roughly 5--8% overhead per video.
 
 ---
 
@@ -200,12 +195,13 @@ The `embed_texts()` function in `src/orchestra/rag/embeddings.py` accepts batch 
 
 Platform analytics responses can be cached in Redis (LRU policy, 256 MB maxmemory as configured in `docker-compose.yml`). Repeated analytics queries for the same campaign within the cache window avoid redundant platform API calls.
 
-### 5. Tiered Video Economics
+### 5. Seedance Video Economics
 
-The draft → upscale pipeline means only ~20% of generated videos incur premium pricing. For every 100 video variants:
-- 100 generated at Draft tier ($0.05/min): **$2.50**
-- ~20 winners upscaled ($0.50/min): **$5.00**
-- Total: **$7.50** vs. $25.00 if all were premium (70% savings)
+Seedance 2.0 via fal.ai provides a single high-quality tier at ~$0.26 per 5-second clip, eliminating multi-tier routing complexity. Cost control levers:
+
+- **Prompt gating**: The LangGraph orchestrator only triggers video generation for `generate_video` intents, preventing accidental generation on text-only requests.
+- **Compliance overhead is minimal**: The Visual Compliance Gate adds ~$0.02 per video (one GPT-4o Vision call), a 5--8% overhead that prevents costly IP takedown requests downstream.
+- **Duration control**: Default 5-second clips keep per-video cost predictable; longer durations can be enabled per tenant.
 
 ---
 
@@ -219,10 +215,10 @@ The draft → upscale pipeline means only ~20% of generated videos incur premium
 | Platform APIs (Twitter Basic) | $100 |
 | LLM (mostly gpt-4o-mini) | $5 |
 | Embeddings (OpenAI) | $0.02 |
-| Video (50 clips, mostly draft) | $3.50 |
-| **Total** | **$433.52/month** |
+| Video (50 clips, Seedance + compliance) | $14.00 |
+| **Total** | **$444.02/month** |
 
-**Per-user cost: $0.43/month**
+**Per-user cost: $0.44/month**
 
 ### Growth (10,000 Users, 10,000 Campaigns/Month)
 
@@ -232,10 +228,10 @@ The draft → upscale pipeline means only ~20% of generated videos incur premium
 | Platform APIs | $100 |
 | LLM (cost-aware routing) | $50 |
 | Embeddings | $0.20 |
-| Video (500 clips, 80/20 split) | $35 |
-| **Total** | **$2,025.20/month** |
+| Video (500 clips, Seedance + compliance) | $140 |
+| **Total** | **$2,130.20/month** |
 
-**Per-user cost: $0.20/month**
+**Per-user cost: $0.21/month**
 
 ### Scale (100,000 Users, 100,000 Campaigns/Month)
 
@@ -245,10 +241,10 @@ The draft → upscale pipeline means only ~20% of generated videos incur premium
 | Platform APIs | $100 |
 | LLM (routing + Ollama offload) | $300 |
 | Embeddings | $1 |
-| Video (5,000 clips) | $350 |
-| **Total** | **$9,251/month** |
+| Video (5,000 clips, Seedance + compliance) | $1,400 |
+| **Total** | **$10,301/month** |
 
-**Per-user cost: $0.09/month**
+**Per-user cost: $0.10/month**
 
 ### Enterprise (1,000,000 Users, 1,000,000 Campaigns/Month)
 
@@ -258,10 +254,10 @@ The draft → upscale pipeline means only ~20% of generated videos incur premium
 | Platform APIs | $5,000 (Twitter Pro for volume) |
 | LLM (dedicated GPU fleet + API mix) | $2,000 |
 | Embeddings | $10 |
-| Video (50,000 clips) | $3,500 |
-| **Total** | **$47,510/month** |
+| Video (50,000 clips, Seedance + compliance) | $14,000 |
+| **Total** | **$58,010/month** |
 
-**Per-user cost: $0.05/month**
+**Per-user cost: $0.06/month**
 
 ---
 
@@ -269,15 +265,15 @@ The draft → upscale pipeline means only ~20% of generated videos incur premium
 
 ```mermaid
 graph LR
-    A[1K Users<br/>$434/mo<br/>$0.43/user] --> B[10K Users<br/>$2,025/mo<br/>$0.20/user]
-    B --> C[100K Users<br/>$9,251/mo<br/>$0.09/user]
-    C --> D[1M Users<br/>$47,510/mo<br/>$0.05/user]
+    A[1K Users<br/>$444/mo<br/>$0.44/user] --> B[10K Users<br/>$2,130/mo<br/>$0.21/user]
+    B --> C[100K Users<br/>$10,301/mo<br/>$0.10/user]
+    C --> D[1M Users<br/>$58,010/mo<br/>$0.06/user]
 ```
 
-Key insight: **per-user cost decreases by 88%** from 1K to 1M users due to:
+Key insight: **per-user cost decreases by 86%** from 1K to 1M users due to:
 
 1. **Infrastructure amortization**: Fixed costs (PostgreSQL, Redis, Kafka) spread across more users
 2. **LLM efficiency**: Intent caching, Ollama offload, and batching reduce per-campaign LLM costs
 3. **Embedding negligibility**: At $0.02/1M tokens, embedding costs never become material
-4. **Video tiering**: Draft-first approach keeps video costs proportional to winners, not total output
+4. **Video scaling**: Seedance via fal.ai is purely usage-based with no fixed overhead; the Visual Compliance Gate adds only 5--8% per-video cost
 5. **Platform APIs**: Most APIs are free; only Twitter has meaningful per-user cost implications

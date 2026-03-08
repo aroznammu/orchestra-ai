@@ -61,6 +61,7 @@ In the Railway service **Variables** tab, add every production variable. At mini
 | `ENCRYPTION_KEY` | Generate: `openssl rand -hex 32` |
 | `OPENAI_API_KEY` | Your production OpenAI key |
 | `ANTHROPIC_API_KEY` | Your production Anthropic key |
+| `FAL_API_KEY` | Your fal.ai API key (for Seedance video generation) |
 | `STRIPE_SECRET_KEY` | Live key from Phase 4 (`sk_live_...`) |
 | `STRIPE_WEBHOOK_SECRET` | Live webhook signing secret from Phase 4 (`whsec_...`) |
 | `STRIPE_STARTER_PRICE_ID` | Live price ID from Phase 4 (`price_...`) |
@@ -175,6 +176,7 @@ Run through this sequence to confirm everything works end-to-end:
 - [ ] **Webhook fires**: Check Railway logs for `stripe_webhook_received` and `subscription_activated`
 - [ ] **Subscription active**: The billing page shows "Active" status
 - [ ] **Gated features unlock**: AI Orchestrator responds, campaign creation works
+- [ ] **Video generation**: Type "Generate a video ad for our summer sale" in the orchestrator -- verify the video player appears (or a compliance violation card if flagged)
 - [ ] **Portal works**: Click "Manage Subscription" on the billing page -- Stripe Customer Portal opens
 
 ---
@@ -256,6 +258,7 @@ FERNET_KEY=<python Fernet.generate_key()>
 ENCRYPTION_KEY=<openssl rand -hex 32>
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+FAL_API_KEY=<your fal.ai key>
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_STARTER_PRICE_ID=price_...

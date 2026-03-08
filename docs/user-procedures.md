@@ -240,10 +240,50 @@ $ orchestra ask "Write a Twitter thread about our Q1 results"
 | `"What's our best performing platform?"` | Analytics Agent |
 | `"Optimize budget allocation for next week"` | Optimization Agent |
 | `"Publish the draft campaign to Twitter"` | Platform Agent |
+| `"Generate a video ad for our summer sale"` | Video Agent |
 
 ---
 
-## 9. System Health
+## 9. Video Generation
+
+The orchestrator includes an AI video generation pipeline powered by **Seedance 2.0** (ByteDance) via fal.ai.
+
+### Generating a Video
+
+Use natural-language prompts that include words like *video*, *video ad*, or *video clip*:
+
+```bash
+$ orchestra ask "Generate a video ad for our summer collection launch"
+```
+
+Or from the web dashboard, type the same prompt in the AI Orchestrator chat interface. The pipeline:
+
+1. **Content node** generates supporting copy based on your prompt
+2. **Video node** sends the prompt to Seedance 2.0 (text-to-video or image-to-video) and receives an MP4 URL
+3. **Visual Compliance Gate** extracts keyframes from the video and scans them with GPT-4o Vision for IP violations
+
+### What the Compliance Gate Checks
+
+| Category | Examples |
+|----------|----------|
+| Celebrity likenesses | Faces resembling public figures |
+| Copyrighted characters | Cartoon/anime characters, movie characters |
+| Trademarked logos | Brand logos, product packaging |
+
+### Outcomes
+
+- **Safe**: The video player renders inline with playback controls. Download the video or use it in a campaign.
+- **Blocked**: A red warning card appears listing the detected violations (category, description, confidence). The video URL is withheld. Rephrase your prompt to avoid the flagged content and try again.
+
+### Tips
+
+- Be specific about the scene you want: *"A cinematic drone shot of a beach resort at golden hour"* works better than *"Make a video"*.
+- Avoid mentioning real brands, celebrities, or fictional characters in your prompt to reduce compliance blocks.
+- Videos are 5 seconds long at 720p by default.
+
+---
+
+## 10. System Health
 
 ```bash
 $ orchestra status
@@ -264,7 +304,7 @@ The status command checks API, PostgreSQL, Redis, and Ollama with 5-second timeo
 
 ---
 
-## 10. Connecting Platform Accounts
+## 11. Connecting Platform Accounts
 
 Platform connections use OAuth2. The flow is initiated via the API:
 
@@ -274,7 +314,7 @@ Platform connections use OAuth2. The flow is initiated via the API:
 
 ---
 
-## 11. API Usage Examples
+## 12. API Usage Examples
 
 All API endpoints are prefixed with `/api/v1`. Authentication is via `Authorization: Bearer <JWT>` or `X-API-Key: <key>`.
 
@@ -294,7 +334,7 @@ All endpoints require `Authorization: Bearer <JWT>` or `X-API-Key: <key>`.
 
 ---
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 ### Common Errors
 
