@@ -7,7 +7,7 @@
   <p align="center">
     <img src="https://img.shields.io/badge/python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12+">
     <img src="https://img.shields.io/badge/license-Apache_2.0-blue?style=flat-square" alt="License">
-    <img src="https://img.shields.io/badge/tests-273_passing-brightgreen?style=flat-square" alt="Tests">
+    <img src="https://img.shields.io/badge/tests-355_passing-brightgreen?style=flat-square" alt="Tests">
     <img src="https://img.shields.io/badge/code_style-ruff-D7FF64?style=flat-square" alt="Ruff">
     <img src="https://img.shields.io/badge/framework-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
     <img src="https://img.shields.io/badge/agents-LangGraph-FF6F00?style=flat-square" alt="LangGraph">
@@ -34,6 +34,7 @@ docker compose up -d
 
 # Copy the example env and configure
 cp .env.example .env
+# Set OPENAI_API_KEY, FAL_API_KEY, STRIPE_SECRET_KEY, DATABASE_URL etc.
 
 # Verify everything is running
 orchestra status
@@ -87,19 +88,23 @@ orchestra version
 | Capability | OrchestraAI | Hootsuite | Buffer | DIY Scripts |
 |---|:---:|:---:|:---:|:---:|
 | **AI Agent Orchestration** (LangGraph multi-agent graph) | :white_check_mark: | :x: | :x: | :x: |
+| **AI Video Generation** (Seedance 2.0 via fal.ai) | :white_check_mark: | :x: | :x: | :x: |
+| **Visual Compliance Gate** (GPT-4o Vision IP/copyright scan) | :white_check_mark: | :x: | :x: | :x: |
 | **Cross-Platform Intelligence** (ROI normalization, marginal returns) | :white_check_mark: | :x: | :x: | :x: |
 | **Guardrailed Bidding** (3-phase autonomy model) | :white_check_mark: | :x: | :x: | :x: |
 | **Financial Risk Containment** (3-tier caps, anomaly detection, kill switch) | :white_check_mark: | :x: | :x: | :x: |
 | **Self-Hostable** (Docker Compose, your data stays yours) | :white_check_mark: | :x: | :x: | :white_check_mark: |
 | **CLI-First** (Typer + Rich, scriptable, pipe-friendly) | :white_check_mark: | :x: | :x: | :white_check_mark: |
 | **RAG Memory** (Qdrant vector store, learns from your campaigns) | :white_check_mark: | :x: | :x: | :x: |
+| **AI Customer Support** (Chat agent, FAQ, guardrailed responses) | :white_check_mark: | :x: | :x: | :x: |
 | **Open Source** (Apache 2.0, extend anything) | :white_check_mark: | :x: | :x: | :white_check_mark: |
 | 9 Platform Connectors | :white_check_mark: | :white_check_mark: | Partial | Manual |
 
 ## Architecture
 
-The core is a **LangGraph StateGraph** with 8 nodes and conditional routing.
-Every request passes through a compliance gate before any action is taken.
+The core is a **LangGraph StateGraph** with 10 nodes and conditional routing.
+Every request passes through a compliance gate before any action is taken, and
+video content is scanned by a Visual Compliance Gate before delivery.
 
 ```mermaid
 graph TD
@@ -111,7 +116,9 @@ graph TD
     COMPLIANCE -->|Analytics| ANALYTICS[Analytics Agent]
     COMPLIANCE -->|Optimize| OPTIMIZER[Optimization Agent]
 
-    CONTENT --> POLICY[Policy Validator]
+    CONTENT --> VIDEO[Video Node<br/>Seedance 2.0 via fal.ai]
+    VIDEO --> VCG[Visual Compliance Gate<br/>GPT-4o Vision]
+    VCG --> POLICY[Policy Validator]
     POLICY -->|Valid| PLATFORM[Platform Dispatch]
     POLICY -->|Invalid| RESPOND
 
@@ -221,6 +228,7 @@ orchestra version             Show version
 |---|---|
 | API | FastAPI, Uvicorn, Pydantic |
 | Agents | LangGraph, LangChain, OpenAI / Anthropic / Ollama |
+| Video | Seedance 2.0 (fal.ai), ffmpeg, GPT-4o Vision compliance |
 | Vector DB | Qdrant (RAG, campaign memory, data moat) |
 | Database | PostgreSQL 16, SQLAlchemy 2.0, Alembic |
 | Cache / Events | Redis 7, Apache Kafka |
@@ -230,22 +238,62 @@ orchestra version             Show version
 
 ## Video Pipeline
 
-Tiered cost routing for video content generation:
+AI-powered video ad generation with automated IP safety scanning:
 
-| Tier | Models | Cost | Use Case |
-|---|---|---|---|
-| **Draft** | Runway, Kling | ~$0.05/min | Rapid iteration, internal review |
-| **Upscale** | Sora, Veo | ~$0.50/min | Final production, client-facing |
-| **BYOK** | Bring Your Own Key | $0 | Use your existing API keys |
+| Component | Technology | Details |
+|---|---|---|
+| **Generation** | ByteDance Seedance 2.0 via fal.ai | Text-to-video and image-to-video, 5s 720p clips at ~$0.26 each |
+| **Compliance** | Visual Compliance Gate (GPT-4o Vision) | Extracts keyframes via ffmpeg, scans for celebrity likenesses, copyrighted characters, and trademarked logos |
+| **Delivery** | Conditional pass/block | Safe videos render in an HTML5 player; flagged videos show a violation card with details |
+
+Prompt the orchestrator with something like *"Generate a video ad for our summer sale"* and the
+pipeline handles generation, compliance scanning, and delivery end-to-end.
+
+## AI Customer Support
+
+Built-in AI-powered customer support with chat, auto-reply, and FAQ management:
+
+| Feature | Description |
+|---|---|
+| **AI Support Agent** | Natural-language chat powered by OpenAI/Anthropic/Ollama with RAG context retrieval and automatic fallback |
+| **Chat Sessions** | Persistent multi-turn conversations with session history, resolve/close lifecycle |
+| **FAQ System** | Categorized FAQ with search, admin CRUD, global and tenant-specific entries |
+| **Guardrailed Responses** | System prompt prevents disclosure of internal architecture, API keys, or pricing algorithms. Post-processing sanitizer strips sensitive patterns |
+| **Tenant Isolation** | All chat sessions and FAQ entries scoped by tenant with RBAC enforcement |
+
+Access via the **Support** tab in the web dashboard or through the API endpoints
+(`/api/v1/support/*` and `/api/v1/faq`).
+
+## Promotional Website
+
+A standalone Next.js marketing site showcasing all OrchestraAI features:
+
+```bash
+cd website && npm run dev    # → http://localhost:3000
+```
+
+| Page | Content |
+|---|---|
+| **Home** | Hero, platform logos, how-it-works, feature highlights, animated stats, social proof, CTA |
+| **Features** | 8 detailed feature sections with alternating layouts |
+| **Pricing** | Starter/Agency cards, self-host option, ROI calculator |
+| **Security** | Authentication, RBAC, GDPR, audit, IP protection, multi-tenant, SOC 2 |
+| **FAQ** | Searchable accordion with 7 categories |
+| **Contact** | Contact form, email, live chat link, response time info |
+
+Built with Next.js 16, Tailwind CSS v4, Framer Motion, and Geist fonts -- matching
+the dashboard's dark theme and indigo accent branding.
 
 ## Documentation
 
 - [Architecture Guide](docs/architecture.md)
-- [Guardrailed Bidding](docs/guardrailed_bidding.md)
-- [Security & Compliance](docs/security_compliance.md)
-- [Data Moat Strategy](docs/data_moat.md)
-- [Cost Analysis](docs/cost_analysis.md)
-- [Launch Strategy](docs/launch_strategy.md)
+- [Guardrailed Bidding](docs/guardrailed-bidding.md)
+- [Security & Compliance](docs/security-compliance.md)
+- [Data Moat Strategy](docs/data-moat.md)
+- [Cost Analysis](docs/cost-analysis.md)
+- [Launch Strategy](docs/launch-strategy.md)
+- [User Procedures](docs/user-procedures.md)
+- [Marketing Video](docs/marketing_video.md)
 
 ## Self-Hosting
 
@@ -299,6 +347,7 @@ zero-ops infrastructure.
 | **White-Label for Agencies** | -- | :white_check_mark: |
 | **Managed LLM Key Proxying** | -- | :white_check_mark: |
 | **SOC 2 Compliance & SLA** | -- | :white_check_mark: |
+| **AI Customer Support Chat & FAQ** | :white_check_mark: | :white_check_mark: |
 | **Priority Support** | Community | Dedicated |
 | **License** | Apache 2.0 | Commercial |
 
