@@ -271,3 +271,124 @@ export async function launchCampaign(id: string): Promise<CampaignResponse> {
 export async function pauseCampaign(id: string): Promise<CampaignResponse> {
   return post<CampaignResponse>(`/campaigns/${id}/pause`);
 }
+
+// ---------------------------------------------------------------------------
+// Support Chat types & functions
+// ---------------------------------------------------------------------------
+
+export interface ChatSessionResponse {
+  id: string;
+  title: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface ChatMessageResponse {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ChatReplyResponse {
+  session_id: string;
+  user_message: ChatMessageResponse;
+  assistant_message: ChatMessageResponse;
+  sources: string[];
+}
+
+export async function listSupportSessions(): Promise<ChatSessionResponse[]> {
+  return get<ChatSessionResponse[]>("/support/sessions");
+}
+
+export async function createSupportSession(
+  title?: string,
+): Promise<ChatSessionResponse> {
+  return post<ChatSessionResponse>("/support/sessions", { title });
+}
+
+export async function sendSupportMessage(
+  sessionId: string,
+  message: string,
+): Promise<ChatReplyResponse> {
+  return post<ChatReplyResponse>("/support/chat", {
+    session_id: sessionId,
+    message,
+  });
+}
+
+export async function getSessionMessages(
+  sessionId: string,
+): Promise<ChatMessageResponse[]> {
+  return get<ChatMessageResponse[]>(
+    `/support/sessions/${sessionId}/messages`,
+  );
+}
+
+export async function resolveSession(
+  sessionId: string,
+): Promise<ChatSessionResponse> {
+  return post<ChatSessionResponse>(
+    `/support/sessions/${sessionId}/resolve`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FAQ types & functions
+// ---------------------------------------------------------------------------
+
+export interface FAQEntryResponse {
+  id: string;
+  category: string;
+  question: string;
+  answer: string;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FAQGroupResponse {
+  category: string;
+  entries: FAQEntryResponse[];
+}
+
+export async function listFAQs(): Promise<FAQGroupResponse[]> {
+  return get<FAQGroupResponse[]>("/faq");
+}
+
+export async function createFAQ(payload: {
+  category?: string;
+  question: string;
+  answer: string;
+  sort_order?: number;
+  is_published?: boolean;
+}): Promise<FAQEntryResponse> {
+  return post<FAQEntryResponse>("/faq", payload);
+}
+
+export async function updateFAQ(
+  id: string,
+  payload: {
+    category?: string;
+    question?: string;
+    answer?: string;
+    sort_order?: number;
+    is_published?: boolean;
+  },
+): Promise<FAQEntryResponse> {
+  return patch<FAQEntryResponse>(`/faq/${id}`, payload);
+}
+
+export async function deleteFAQ(id: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/faq/${id}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  if (!res.ok) {
+    await handleResponse(res);
+  }
+}

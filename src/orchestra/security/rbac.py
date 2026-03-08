@@ -69,6 +69,10 @@ class Permission(str, Enum):
     # Audit
     AUDIT_VIEW = "audit:view"
 
+    # Support
+    SUPPORT_VIEW = "support:view"
+    SUPPORT_MANAGE = "support:manage"
+
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.VIEWER: {
@@ -78,6 +82,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.BUDGET_VIEW,
         Permission.SETTINGS_VIEW,
         Permission.ORCHESTRATOR_VIEW,
+        Permission.SUPPORT_VIEW,
     },
     Role.MEMBER: {
         # Inherits VIEWER +
@@ -100,6 +105,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.KILL_SWITCH_VIEW,
         Permission.DATA_EXPORT,
         Permission.AUDIT_VIEW,
+        Permission.SUPPORT_MANAGE,
     },
     Role.OWNER: {
         # Inherits ADMIN +

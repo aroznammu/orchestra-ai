@@ -94,6 +94,18 @@ class BiddingPhase(str, enum.Enum):
     CONTROLLED_AUTONOMOUS = "controlled_autonomous"
 
 
+class ChatSessionStatus(str, enum.Enum):
+    OPEN = "open"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class ChatMessageRole(str, enum.Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+
+
 # --- Models ---
 
 
@@ -276,6 +288,57 @@ class APIKey(TimestampMixin, Base):
 
     __table_args__ = (
         Index("ix_api_keys_tenant", "tenant_id"),
+    )
+
+
+class ChatSession(TimestampMixin, Base):
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    title: Mapped[str] = mapped_column(String(255), default="New conversation")
+    status: Mapped[ChatSessionStatus] = mapped_column(
+        Enum(ChatSessionStatus), default=ChatSessionStatus.OPEN
+    )
+
+    messages: Mapped[list["ChatMessage"]] = relationship(
+        back_populates="session", cascade="all, delete-orphan", order_by="ChatMessage.created_at"
+    )
+
+    __table_args__ = (Index("ix_chat_sessions_tenant_status", "tenant_id", "status"),)
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("chat_sessions.id"), nullable=False, index=True)
+    role: Mapped[ChatMessageRole] = mapped_column(Enum(ChatMessageRole), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    session: Mapped["ChatSession"] = relationship(back_populates="messages")
+
+    __table_args__ = (Index("ix_chat_messages_session_created", "session_id", "created_at"),)
+
+
+class FAQEntry(TimestampMixin, Base):
+    __tablename__ = "faq_entries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("tenants.id"), nullable=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False, default="General")
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    __table_args__ = (
+        Index("ix_faq_tenant_category_published", "tenant_id", "category", "is_published"),
     )
 
 

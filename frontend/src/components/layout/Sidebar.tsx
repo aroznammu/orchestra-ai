@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   BrainCircuit,
+  HelpCircle,
   LayoutDashboard,
   Megaphone,
   Settings,
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/orchestrator", label: "AI Orchestrator", icon: BrainCircuit },
+  { href: "/support", label: "Support", icon: HelpCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

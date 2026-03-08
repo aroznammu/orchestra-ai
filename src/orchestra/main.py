@@ -19,12 +19,14 @@ from orchestra.api.routes import (
     auth,
     billing,
     campaigns,
+    faq,
     gdpr,
     health,
     kill_switch,
     orchestrator,
     platforms,
     reports,
+    support,
 )
 from orchestra.config import get_settings
 
@@ -166,6 +168,8 @@ app.include_router(billing.router, prefix="/api/v1")
 app.include_router(gdpr.router, prefix="/api/v1")
 app.include_router(audit.router, prefix="/api/v1")
 app.include_router(kill_switch.router, prefix="/api/v1")
+app.include_router(support.router, prefix="/api/v1")
+app.include_router(faq.router, prefix="/api/v1")
 
 # --- Dashboard UI ---
 
