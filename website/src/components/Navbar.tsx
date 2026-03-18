@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { NAV_ITEMS, DASHBOARD_URL } from "@/lib/constants";
 
@@ -23,21 +23,22 @@ export default function Navbar() {
   }
 
   return (
-    <motion.header
+    <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-xl"
+          ? "border-b border-zinc-800/60 bg-zinc-950/80 shadow-lg shadow-black/20 backdrop-blur-xl"
           : "bg-transparent"
       }`}
-      initial={{ y: -80 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.4 }}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2.5" onClick={closeMobile}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
+          <motion.span
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white"
+            whileHover={{ scale: 1.1, rotate: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          >
             O
-          </span>
+          </motion.span>
           <span className="text-lg font-semibold text-zinc-50">OrchestraAI</span>
         </Link>
 
@@ -46,13 +47,20 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className={`text-sm transition-colors ${
+              className={`relative text-sm transition-colors ${
                 pathname === href
                   ? "font-medium text-indigo-400"
                   : "text-zinc-400 hover:text-zinc-50"
               }`}
             >
               {label}
+              {pathname === href && (
+                <motion.div
+                  className="absolute -bottom-1 left-0 right-0 h-px bg-indigo-400"
+                  layoutId="nav-indicator"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
             </Link>
           ))}
         </div>
@@ -60,10 +68,10 @@ export default function Navbar() {
         <div className="hidden md:block">
           <Link
             href={DASHBOARD_URL}
-            className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+            className="group inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-900/30"
           >
             Get Started
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
@@ -76,37 +84,42 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {mobileOpen && (
-        <motion.div
-          className="border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-xl md:hidden"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-        >
-          <div className="flex flex-col gap-4 px-6 py-6">
-            {NAV_ITEMS.map(({ href, label }) => (
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            className="border-t border-zinc-800 bg-zinc-950/98 backdrop-blur-xl md:hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex flex-col gap-1 px-6 py-4">
+              {NAV_ITEMS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={closeMobile}
+                  className={`rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                    pathname === href
+                      ? "bg-indigo-600/10 font-medium text-indigo-400"
+                      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-50"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
               <Link
-                key={href}
-                href={href}
+                href={DASHBOARD_URL}
                 onClick={closeMobile}
-                className={`text-sm ${
-                  pathname === href ? "font-medium text-indigo-400" : "text-zinc-400"
-                }`}
+                className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white"
               >
-                {label}
+                Get Started
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-            ))}
-            <Link
-              href={DASHBOARD_URL}
-              onClick={closeMobile}
-              className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white"
-            >
-              Get Started
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </motion.div>
-      )}
-    </motion.header>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 }

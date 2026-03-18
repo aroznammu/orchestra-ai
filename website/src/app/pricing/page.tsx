@@ -6,23 +6,33 @@ import Link from "next/link";
 import { ArrowRight, Terminal, Check } from "lucide-react";
 import SectionHeading from "@/components/SectionHeading";
 import PricingCard from "@/components/PricingCard";
+import ComparisonTable from "@/components/ComparisonTable";
 import { PRICING_TIERS } from "@/lib/constants";
 
 export default function PricingPage() {
   const [spend, setSpend] = useState(5000);
-
   const savings = Math.round(spend * 0.35);
 
   return (
     <>
       {/* Hero */}
-      <section className="px-6 py-24">
+      <section className="relative overflow-hidden px-6 py-24">
+        <div className="pointer-events-none absolute inset-0 radial-glow" />
         <div className="mx-auto max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="mb-4 inline-block rounded-full border border-indigo-800/60 bg-indigo-950/40 px-4 py-1 text-xs font-medium uppercase tracking-wider text-indigo-300">
+              Pricing
+            </span>
+          </motion.div>
           <motion.h1
             className="text-4xl font-bold tracking-tight text-zinc-50 sm:text-5xl"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.05 }}
           >
             Simple,{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
@@ -37,7 +47,7 @@ export default function PricingPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             Start with a free trial. No credit card required. Enterprise Cloud or self-host
-            — you choose.
+            &mdash; you choose.
           </motion.p>
         </div>
       </section>
@@ -55,7 +65,7 @@ export default function PricingPage() {
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <motion.div
-            className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-center"
+            className="glass rounded-2xl p-8 text-center"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -91,11 +101,12 @@ export default function PricingPage() {
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <SectionHeading
+            badge="ROI Calculator"
             title="Estimate Your Savings"
             subtitle="See how much OrchestraAI can save your team with intelligent budget optimization."
           />
           <motion.div
-            className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8"
+            className="glass rounded-2xl p-8"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -142,17 +153,30 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Comparison */}
+      <section className="px-6 pb-24">
+        <div className="mx-auto max-w-5xl">
+          <SectionHeading
+            badge="Comparison"
+            title="How We Stack Up"
+            subtitle="Feature-by-feature comparison with existing tools."
+          />
+          <ComparisonTable />
+        </div>
+      </section>
+
       {/* Enterprise */}
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <motion.div
-            className="rounded-2xl border border-indigo-800/40 bg-gradient-to-br from-indigo-950/60 via-zinc-900 to-zinc-900 p-8"
+            className="relative overflow-hidden rounded-2xl border border-indigo-800/30 bg-gradient-to-br from-indigo-950/60 via-zinc-900 to-zinc-900 p-8"
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(99,102,241,0.1),transparent_50%)]" />
+            <div className="relative flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-2xl font-bold text-zinc-50">Need More?</h3>
                 <p className="mt-2 max-w-md text-zinc-400">
@@ -176,10 +200,10 @@ export default function PricingPage() {
               </div>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                className="group inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 hover:shadow-indigo-600/30"
               >
                 Contact Sales
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
           </motion.div>

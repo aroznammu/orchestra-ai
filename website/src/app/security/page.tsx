@@ -1,16 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Lock, CheckCircle } from "lucide-react";
 import SectionHeading from "@/components/SectionHeading";
 import CTABanner from "@/components/CTABanner";
 import { SECURITY_FEATURES } from "@/lib/constants";
+
+const TRUST_BADGES = [
+  { label: "SOC 2 Ready", detail: "Logical access controls and audit trails", icon: ShieldCheck },
+  { label: "GDPR Compliant", detail: "Data export, deletion, and consent management", icon: CheckCircle },
+  { label: "Apache 2.0", detail: "Open-core — audit the source code yourself", icon: Lock },
+];
 
 export default function SecurityPage() {
   return (
     <>
       {/* Hero */}
-      <section className="px-6 py-24">
+      <section className="relative overflow-hidden px-6 py-24">
+        <div className="pointer-events-none absolute inset-0 radial-glow" />
         <div className="mx-auto max-w-4xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -42,22 +49,47 @@ export default function SecurityPage() {
         </div>
       </section>
 
+      {/* Trust badges */}
+      <section className="px-6 pb-16">
+        <div className="mx-auto max-w-4xl">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {TRUST_BADGES.map((badge, i) => {
+              const Icon = badge.icon;
+              return (
+                <motion.div
+                  key={badge.label}
+                  className="glass rounded-xl p-5 text-center"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.08 }}
+                >
+                  <Icon className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
+                  <p className="text-sm font-semibold text-zinc-50">{badge.label}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{badge.detail}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Security features */}
       <section className="px-6 pb-24">
-        <div className="mx-auto max-w-6xl space-y-12">
+        <div className="mx-auto max-w-6xl space-y-8">
           {SECURITY_FEATURES.map((feature, i) => {
             const Icon = feature.icon;
             return (
               <motion.div
                 key={feature.title}
-                className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8"
+                className="glass rounded-2xl p-8"
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-indigo-600/10">
+                  <div className="icon-glow flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
                     <Icon className="h-5 w-5 text-indigo-400" />
                   </div>
                   <div className="flex-1">
@@ -82,36 +114,14 @@ export default function SecurityPage() {
         </div>
       </section>
 
-      {/* Trust badges */}
+      {/* Built for Trust */}
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <SectionHeading
+            badge="Trust"
             title="Built for Trust"
             subtitle="Security isn't a feature we added — it's how we built the platform."
           />
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: "SOC 2 Ready", detail: "Logical access controls and audit trails" },
-              { label: "GDPR Compliant", detail: "Data export, deletion, and consent management" },
-              {
-                label: "Apache 2.0",
-                detail: "Open-core — audit the source code yourself",
-              },
-            ].map((badge, i) => (
-              <motion.div
-                key={badge.label}
-                className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 text-center"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.08 }}
-              >
-                <ShieldCheck className="mx-auto mb-2 h-6 w-6 text-emerald-400" />
-                <p className="text-sm font-semibold text-zinc-50">{badge.label}</p>
-                <p className="mt-1 text-xs text-zinc-500">{badge.detail}</p>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 

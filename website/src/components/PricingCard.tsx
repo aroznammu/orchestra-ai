@@ -22,10 +22,10 @@ export default function PricingCard({
 }: PricingCardProps) {
   return (
     <motion.div
-      className={`relative flex flex-col rounded-2xl border p-8 ${
+      className={`relative flex flex-col rounded-2xl p-8 ${
         popular
-          ? "border-indigo-600 bg-zinc-900/80 shadow-lg shadow-indigo-900/20"
-          : "border-zinc-800 bg-zinc-900/60"
+          ? "gradient-border border border-indigo-600/40 bg-zinc-900/80 shadow-lg shadow-indigo-900/20"
+          : "border border-zinc-800 bg-zinc-900/60"
       }`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -33,9 +33,14 @@ export default function PricingCard({
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       {popular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-4 py-1 text-xs font-medium text-white">
+        <motion.span
+          className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-4 py-1 text-xs font-medium text-white shadow-lg shadow-indigo-600/30"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           Most Popular
-        </span>
+        </motion.span>
       )}
 
       <h3 className="text-xl font-semibold text-zinc-50">{name}</h3>
@@ -57,9 +62,9 @@ export default function PricingCard({
 
       <Link
         href={DASHBOARD_URL}
-        className={`mt-8 block rounded-full py-3 text-center text-sm font-medium transition-colors ${
+        className={`mt-8 block rounded-full py-3 text-center text-sm font-medium transition-all ${
           popular
-            ? "bg-indigo-600 text-white hover:bg-indigo-500"
+            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 hover:shadow-indigo-600/30"
             : "border border-zinc-700 text-zinc-300 hover:border-indigo-600 hover:text-white"
         }`}
       >

@@ -27,6 +27,7 @@ export const NAV_ITEMS = [
 
 export const DASHBOARD_URL = "https://useorchestra.dev";
 export const SUPPORT_EMAIL = "support@useorchestra.dev";
+export const GITHUB_URL = "https://github.com/aroznammu/orchestra-ai";
 
 /* ------------------------------------------------------------------ */
 /*  Platforms                                                           */
@@ -107,7 +108,7 @@ export const FEATURE_HIGHLIGHTS: FeatureHighlight[] = [
     icon: Database,
     title: "Data Moat Engine",
     description:
-      "Every campaign compounds your performance intelligence. Your data moat grows over time — competitors can't copy your advantage.",
+      "Every campaign compounds your performance intelligence. Your data moat grows over time \u2014 competitors can\u2019t copy your advantage.",
   },
 ];
 
@@ -122,6 +123,7 @@ export interface FeatureDetail {
   subtitle: string;
   description: string;
   bullets: string[];
+  code?: string;
 }
 
 export const FEATURES_DETAILED: FeatureDetail[] = [
@@ -131,19 +133,20 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     title: "AI Agent Orchestration",
     subtitle: "10-Node LangGraph Multi-Agent System",
     description:
-      "A single natural-language command triggers a sophisticated 10-node agent graph that classifies intent, checks compliance, generates content, creates video, validates IP, enforces platform rules, publishes, collects analytics, optimizes performance, and responds — all automatically.",
+      "A single natural-language command triggers a sophisticated 10-node agent graph that classifies intent, checks compliance, generates content, creates video, validates IP, enforces platform rules, publishes, collects analytics, optimizes performance, and responds \u2014 all automatically.",
     bullets: [
-      "Classify — LLM intent classification with OpenAI → Anthropic → Ollama fallback",
-      "Compliance Gate — Pre-action checks for prohibited content, targeting rules, budget limits",
-      "Content Agent — Multi-provider LLM content generation with automatic fallback",
-      "Video Node — AI video via Seedance 2.0 (text-to-video & image-to-video)",
-      "Visual Compliance Gate — Keyframe extraction + GPT-4o Vision IP scanning",
-      "Policy Node — Platform-specific rules (character limits, hashtags, media constraints)",
-      "Platform Node — Publish/schedule dispatch to all 9 platform connectors",
-      "Analytics Node — Cross-platform metrics aggregation and benchmarking",
-      "Optimize Node — Thompson Sampling, UCB, and Bayesian budget allocation",
-      "Respond — Final response assembly and execution trace cleanup",
+      "Classify \u2014 LLM intent classification with OpenAI \u2192 Anthropic \u2192 Ollama fallback",
+      "Compliance Gate \u2014 Pre-action checks for prohibited content, targeting rules, budget limits",
+      "Content Agent \u2014 Multi-provider LLM content generation with automatic fallback",
+      "Video Node \u2014 AI video via Seedance 2.0 (text-to-video & image-to-video)",
+      "Visual Compliance Gate \u2014 Keyframe extraction + GPT-4o Vision IP scanning",
+      "Policy Node \u2014 Platform-specific rules (character limits, hashtags, media constraints)",
+      "Platform Node \u2014 Publish/schedule dispatch to all 9 platform connectors",
+      "Analytics Node \u2014 Cross-platform metrics aggregation and benchmarking",
+      "Optimize Node \u2014 Thompson Sampling, UCB, and Bayesian budget allocation",
+      "Respond \u2014 Final response assembly and execution trace cleanup",
     ],
+    code: 'orchestra ask "Launch a summer sale campaign across Instagram and TikTok with a $500 budget"',
   },
   {
     id: "video",
@@ -153,13 +156,14 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Generate marketing video ads from natural language descriptions or reference images. Every frame is scanned for intellectual property violations before delivery.",
     bullets: [
-      "Seedance 2.0 via fal.ai — ~$0.26 per 5-second 720p clip",
+      "Seedance 2.0 via fal.ai \u2014 ~$0.26 per 5-second 720p clip",
       "Text-to-video and image-to-video generation modes",
       "Visual Compliance Gate with GPT-4o Vision keyframe analysis",
       "Automatic detection of celebrity likenesses, copyrighted characters, trademarked logos",
       "Safe videos delivered in HTML5 player; flagged content blocked with violation details",
       "Per-tenant audit logging of all scan results",
     ],
+    code: 'orchestra ask "Generate a video ad for our summer sale"',
   },
   {
     id: "guardrails",
@@ -169,12 +173,12 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Your AI earns autonomy over time through a phased progression system. Combined with multi-tier spend caps, anomaly detection, and an emergency kill switch, your budget is always protected.",
     bullets: [
-      "Hard Guardrail Phase — Every bid requires explicit human approval",
-      "Semi-Autonomous Phase — AI executes within bounds, exceptions reviewed by humans",
-      "Controlled Autonomous Phase — Full AI control within strict limits, monitoring only",
-      "3-tier spend caps — Daily, weekly, and monthly limits that AI cannot override",
-      "Statistical anomaly detection — Z-score and IQR-based flagging of unusual spend",
-      "Kill Switch — Halt all spend across all platforms with a single click",
+      "Hard Guardrail Phase \u2014 Every bid requires explicit human approval",
+      "Semi-Autonomous Phase \u2014 AI executes within bounds, exceptions reviewed by humans",
+      "Controlled Autonomous Phase \u2014 Full AI control within strict limits, monitoring only",
+      "3-tier spend caps \u2014 Daily, weekly, and monthly limits that AI cannot override",
+      "Statistical anomaly detection \u2014 Z-score and IQR-based flagging of unusual spend",
+      "Kill Switch \u2014 Halt all spend across all platforms with a single click",
     ],
   },
   {
@@ -185,11 +189,11 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Compare apples to apples across all 9 platforms with normalized metrics. The optimization engine uses marginal return curves to allocate budget where it delivers the most impact.",
     bullets: [
-      "ROI normalization — Comparable returns across every platform",
-      "Marginal return analysis — Budget allocated to highest-impact channels",
-      "Attribution modeling — Credit allocation across platform touchpoints",
-      "Saturation detection — Flags diminishing returns automatically",
-      "Intelligent budget reallocation — Dynamic redistribution based on performance",
+      "ROI normalization \u2014 Comparable returns across every platform",
+      "Marginal return analysis \u2014 Budget allocated to highest-impact channels",
+      "Attribution modeling \u2014 Credit allocation across platform touchpoints",
+      "Saturation detection \u2014 Flags diminishing returns automatically",
+      "Intelligent budget reallocation \u2014 Dynamic redistribution based on performance",
     ],
   },
   {
@@ -200,11 +204,11 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Every campaign you run makes OrchestraAI smarter for your business. Your performance data compounds into a proprietary competitive advantage that grows over time.",
     bullets: [
-      "Campaign → Engagement → Normalize → Embed → Model update flywheel",
+      "Campaign \u2192 Engagement \u2192 Normalize \u2192 Embed \u2192 Model update flywheel",
       "Per-platform engagement signal normalization",
       "Content + performance embedding for retrieval",
       "Tenant-specific model that improves with every campaign",
-      "Maturity progression: cold_start → warming → learning → maturing → optimized",
+      "Maturity progression: cold_start \u2192 warming \u2192 learning \u2192 maturing \u2192 optimized",
     ],
   },
   {
@@ -215,15 +219,15 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Connect all nine major advertising and social media platforms with OAuth2 authentication, automatic retry with exponential backoff, rate-limit handling, and Fernet-encrypted token storage.",
     bullets: [
-      "Twitter/X v2 — Publish, analytics, audience targeting",
-      "YouTube v3 — Video publishing, analytics, audience management",
-      "TikTok v2 — Short-form video, analytics, audience targeting",
-      "Pinterest v5 — Pin publishing, analytics, audience insights",
-      "Facebook Graph v19 — Posts, ads, analytics, audiences",
-      "Instagram Graph v19 — Stories, reels, analytics, audiences",
-      "LinkedIn v2 — Professional content, analytics, targeting",
-      "Snapchat Marketing v1 — Snap ads, analytics, audience reach",
-      "Google Ads v16 — Search, display, video ads, full analytics",
+      "Twitter/X v2 \u2014 Publish, analytics, audience targeting",
+      "YouTube v3 \u2014 Video publishing, analytics, audience management",
+      "TikTok v2 \u2014 Short-form video, analytics, audience targeting",
+      "Pinterest v5 \u2014 Pin publishing, analytics, audience insights",
+      "Facebook Graph v19 \u2014 Posts, ads, analytics, audiences",
+      "Instagram Graph v19 \u2014 Stories, reels, analytics, audiences",
+      "LinkedIn v2 \u2014 Professional content, analytics, targeting",
+      "Snapchat Marketing v1 \u2014 Snap ads, analytics, audience reach",
+      "Google Ads v16 \u2014 Search, display, video ads, full analytics",
     ],
   },
   {
@@ -234,9 +238,9 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
     description:
       "Enterprise-grade access control with complete tenant isolation. Every query is scoped to the tenant, every action is permission-checked, and every operation is audit-logged.",
     bullets: [
-      "4-tier role hierarchy: Owner → Admin → Member → Viewer",
+      "4-tier role hierarchy: Owner \u2192 Admin \u2192 Member \u2192 Viewer",
       "26 granular permissions across campaigns, platforms, analytics, budget, and more",
-      "Query-level tenant isolation — no cross-tenant data access possible",
+      "Query-level tenant isolation \u2014 no cross-tenant data access possible",
       "Qdrant vector collections namespaced per tenant",
       "Complete audit trail of all operations with user attribution",
     ],
@@ -250,11 +254,88 @@ export const FEATURES_DETAILED: FeatureDetail[] = [
       "OrchestraAI remembers your campaigns, content, and decisions using vector search. Past performance is factored into every recommendation, so the system learns what works for your brand.",
     bullets: [
       "Qdrant vector database for campaign and content embeddings",
-      "OpenAI text-embedding-3-small → Ollama nomic-embed-text → hash fallback",
-      "Campaign memory — index campaigns, content templates, and AI decisions",
-      "Performance-weighted retrieval — successful campaigns rank higher",
-      "Metric updates — embeddings refresh as campaign performance evolves",
+      "OpenAI text-embedding-3-small \u2192 Ollama nomic-embed-text \u2192 hash fallback",
+      "Campaign memory \u2014 index campaigns, content templates, and AI decisions",
+      "Performance-weighted retrieval \u2014 successful campaigns rank higher",
+      "Metric updates \u2014 embeddings refresh as campaign performance evolves",
     ],
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Comparison table                                                   */
+/* ------------------------------------------------------------------ */
+
+export interface ComparisonRow {
+  capability: string;
+  orchestra: boolean;
+  hootsuite: boolean;
+  buffer: boolean;
+  diy: boolean;
+}
+
+export const COMPARISON_DATA: ComparisonRow[] = [
+  { capability: "AI Agent Orchestration", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "AI Video Generation", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Visual Compliance Gate", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Cross-Platform Intelligence", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Guardrailed Bidding", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Financial Risk Containment", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Self-Hostable", orchestra: true, hootsuite: false, buffer: false, diy: true },
+  { capability: "CLI-First", orchestra: true, hootsuite: false, buffer: false, diy: true },
+  { capability: "RAG Memory", orchestra: true, hootsuite: false, buffer: false, diy: false },
+  { capability: "Open Source (Apache 2.0)", orchestra: true, hootsuite: false, buffer: false, diy: true },
+  { capability: "9 Platform Connectors", orchestra: true, hootsuite: true, buffer: false, diy: false },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Architecture nodes                                                 */
+/* ------------------------------------------------------------------ */
+
+export interface ArchNode {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export const ARCHITECTURE_NODES: ArchNode[] = [
+  { id: "input", label: "User Input", description: "Natural language command" },
+  { id: "classify", label: "Classify", description: "Intent classification" },
+  { id: "compliance", label: "Compliance", description: "Pre-action checks" },
+  { id: "content", label: "Content", description: "LLM generation" },
+  { id: "video", label: "Video", description: "Seedance 2.0" },
+  { id: "vcg", label: "Vision Gate", description: "IP compliance scan" },
+  { id: "policy", label: "Policy", description: "Platform rules" },
+  { id: "platform", label: "Publish", description: "9-platform dispatch" },
+  { id: "analytics", label: "Analytics", description: "Metrics collection" },
+  { id: "respond", label: "Response", description: "Final output" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Testimonials                                                       */
+/* ------------------------------------------------------------------ */
+
+export interface Testimonial {
+  quote: string;
+  role: string;
+  company: string;
+}
+
+export const TESTIMONIALS: Testimonial[] = [
+  {
+    quote: "OrchestraAI replaced five tools and cut our campaign setup time by 80%. The AI orchestrator just works.",
+    role: "Marketing Director",
+    company: "Growth-Stage SaaS",
+  },
+  {
+    quote: "The financial guardrails alone saved us from a $5,000 mistake on Google Ads. Worth every penny.",
+    role: "Head of Digital",
+    company: "E-Commerce Brand",
+  },
+  {
+    quote: "We manage 40+ client accounts. The kill switch and spend caps give us peace of mind no other tool provides.",
+    role: "Agency Principal",
+    company: "Digital Marketing Agency",
   },
 ];
 
@@ -338,7 +419,7 @@ export const SECURITY_FEATURES: SecurityFeature[] = [
     title: "Role-Based Access Control",
     description: "Fine-grained permissions ensure the right people have the right access.",
     items: [
-      "4-tier role hierarchy: Owner → Admin → Member → Viewer",
+      "4-tier role hierarchy: Owner \u2192 Admin \u2192 Member \u2192 Viewer",
       "26 granular permissions across all platform features",
       "Kill switch restricted to Owner role only",
       "Data export and audit restricted to Admin and above",
@@ -349,9 +430,9 @@ export const SECURITY_FEATURES: SecurityFeature[] = [
     title: "GDPR Compliance",
     description: "Full compliance with EU data protection regulations.",
     items: [
-      "Data export — Article 20 (Right to Data Portability)",
-      "Data deletion — Article 17 (Right to Erasure)",
-      "Consent management — Article 7 (Consent Recording & Status)",
+      "Data export \u2014 Article 20 (Right to Data Portability)",
+      "Data deletion \u2014 Article 17 (Right to Erasure)",
+      "Consent management \u2014 Article 7 (Consent Recording & Status)",
       "Complete data lineage and processing records",
     ],
   },
@@ -373,7 +454,7 @@ export const SECURITY_FEATURES: SecurityFeature[] = [
     items: [
       "GPT-4o Vision keyframe analysis for every generated video",
       "Celebrity likeness, copyright, and trademark detection",
-      "Conservative policy — ambiguous content is blocked",
+      "Conservative policy \u2014 ambiguous content is blocked",
       "Temporary keyframe processing with automatic cleanup",
     ],
   },
@@ -383,7 +464,7 @@ export const SECURITY_FEATURES: SecurityFeature[] = [
     description: "Your data never mixes with other organizations.",
     items: [
       "tenant_id scoping on all database tables",
-      "Query-level isolation — no cross-tenant data access",
+      "Query-level isolation \u2014 no cross-tenant data access",
       "Qdrant vector collections namespaced per tenant",
       "No superuser bypass of tenant scoping",
     ],
@@ -427,12 +508,12 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "How do I create my first campaign?",
         answer:
-          "Navigate to Campaigns in the sidebar, click 'Create Campaign', fill in the name, select target platforms, set your budget, and click Create. You can then launch it from the campaign list. Alternatively, use the AI Orchestrator and type something like 'Create a summer sale campaign on Instagram and TikTok with a $500 budget.'",
+          "Navigate to Campaigns in the sidebar, click \u2018Create Campaign\u2019, fill in the name, select target platforms, set your budget, and click Create. You can then launch it from the campaign list. Alternatively, use the AI Orchestrator and type something like \u2018Create a summer sale campaign on Instagram and TikTok with a $500 budget.\u2019",
       },
       {
         question: "How do I connect my social media accounts?",
         answer:
-          "Go to Settings > Platforms and click 'Connect' next to the platform you want to add. You will be redirected to the platform's OAuth flow to authorize OrchestraAI. Once connected, the platform appears as active in your dashboard.",
+          "Go to Settings > Platforms and click \u2018Connect\u2019 next to the platform you want to add. You will be redirected to the platform\u2019s OAuth flow to authorize OrchestraAI. Once connected, the platform appears as active in your dashboard.",
       },
     ],
   },
@@ -457,12 +538,12 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "Can I run campaigns on multiple platforms simultaneously?",
         answer:
-          "Yes. When creating a campaign, select multiple platforms (e.g., Instagram, TikTok, LinkedIn). OrchestraAI automatically adapts content for each platform's requirements and publishes across all of them. Cross-platform analytics are available in the Analytics dashboard.",
+          "Yes. When creating a campaign, select multiple platforms (e.g., Instagram, TikTok, LinkedIn). OrchestraAI automatically adapts content for each platform\u2019s requirements and publishes across all of them. Cross-platform analytics are available in the Analytics dashboard.",
       },
       {
         question: "My platform connection shows as inactive. What should I do?",
         answer:
-          "Platform connections can become inactive if the OAuth token expires. Go to Settings > Platforms, disconnect the inactive platform, and reconnect it. This will refresh your authorization tokens. If the issue persists, contact support@useorchestra.dev.",
+          "Platform connections can become inactive if the OAuth token expires. Go to Settings > Platforms, disconnect the inactive platform, and reconnect it. This will refresh your authorization tokens.",
       },
     ],
   },
@@ -477,7 +558,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "How do I upgrade or change my subscription?",
         answer:
-          "Go to Settings > Billing, where you can see your current plan and click 'Upgrade' or 'Manage Subscription'. This opens the Stripe customer portal where you can change plans, update payment methods, or cancel.",
+          "Go to Settings > Billing, where you can see your current plan and click \u2018Upgrade\u2019 or \u2018Manage Subscription\u2019. This opens the Stripe customer portal where you can change plans, update payment methods, or cancel.",
       },
     ],
   },
@@ -487,7 +568,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "What is the Kill Switch?",
         answer:
-          "The Kill Switch is an emergency feature that instantly halts all ad spend across every connected platform with a single click. It's available in the sidebar and is designed for situations where you need to immediately stop all campaigns — for example, if you detect anomalous spending or need to respond to a brand safety incident.",
+          "The Kill Switch is an emergency feature that instantly halts all ad spend across every connected platform with a single click. It\u2019s available in the sidebar and is designed for situations where you need to immediately stop all campaigns \u2014 for example, if you detect anomalous spending or need to respond to a brand safety incident.",
       },
       {
         question: "How does OrchestraAI prevent overspending?",
@@ -507,7 +588,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "What analytics does OrchestraAI provide?",
         answer:
-          "OrchestraAI provides cross-platform analytics including impressions, engagement, clicks, spend, ROI, and engagement rates for each connected platform. The dashboard shows aggregated metrics and per-platform breakdowns. You can also ask the AI Orchestrator for detailed reports by typing something like 'Show me analytics for last 30 days.'",
+          "OrchestraAI provides cross-platform analytics including impressions, engagement, clicks, spend, ROI, and engagement rates for each connected platform. The dashboard shows aggregated metrics and per-platform breakdowns. You can also ask the AI Orchestrator for detailed reports by typing something like \u2018Show me analytics for last 30 days.\u2019",
       },
     ],
   },
@@ -517,7 +598,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "The AI Orchestrator returned an error. What should I do?",
         answer:
-          "First, try rephrasing your request more specifically. If the error persists, check that you have an active subscription (Settings > Billing) and that your platform connections are active. For persistent issues, contact support@useorchestra.dev with your trace ID (shown in the error response).",
+          "First, try rephrasing your request more specifically. If the error persists, check that you have an active subscription (Settings > Billing) and that your platform connections are active. For persistent issues, use the contact form or email support.",
       },
     ],
   },
@@ -539,14 +620,14 @@ export const HOW_IT_WORKS: Step[] = [
     number: 1,
     title: "Describe",
     description:
-      "Tell OrchestraAI what you need in plain English. \"Generate a video ad for our summer sale and publish to Instagram and TikTok.\"",
+      'Tell OrchestraAI what you need in plain English. "Generate a video ad for our summer sale and publish to Instagram and TikTok."',
     icon: Zap,
   },
   {
     number: 2,
     title: "Orchestrate",
     description:
-      "The 10-node AI agent classifies intent, generates content, creates video, checks compliance, and validates platform rules — all automatically.",
+      "The 10-node AI agent classifies intent, generates content, creates video, checks compliance, and validates platform rules \u2014 all automatically.",
     icon: BrainCircuit,
   },
   {
@@ -556,4 +637,25 @@ export const HOW_IT_WORKS: Step[] = [
       "Content goes live across your selected platforms with optimized settings. Analytics flow back to fuel the next campaign.",
     icon: Globe,
   },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Tech Stack                                                         */
+/* ------------------------------------------------------------------ */
+
+export interface TechItem {
+  layer: string;
+  tech: string;
+}
+
+export const TECH_STACK: TechItem[] = [
+  { layer: "API", tech: "FastAPI, Uvicorn, Pydantic" },
+  { layer: "Agents", tech: "LangGraph, LangChain, OpenAI / Anthropic / Ollama" },
+  { layer: "Video", tech: "Seedance 2.0 (fal.ai), ffmpeg, GPT-4o Vision" },
+  { layer: "Vector DB", tech: "Qdrant (RAG, campaign memory, data moat)" },
+  { layer: "Database", tech: "PostgreSQL 16, SQLAlchemy 2.0, Alembic" },
+  { layer: "Cache", tech: "Redis 7, Apache Kafka" },
+  { layer: "CLI", tech: "Typer, Rich" },
+  { layer: "Security", tech: "JWT, bcrypt, Fernet encryption" },
+  { layer: "Infra", tech: "Docker Compose (6 services)" },
 ];
