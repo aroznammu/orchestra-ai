@@ -16,7 +16,7 @@ export default function ContactForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const mailto = `mailto:support@orchestraai.dev?subject=${encodeURIComponent(
+    const mailto = `mailto:support@useorchestra.dev?subject=${encodeURIComponent(
       `[${form.subject}] from ${form.name}`
     )}&body=${encodeURIComponent(form.message)}`;
     window.location.href = mailto;
@@ -29,8 +29,8 @@ export default function ContactForm() {
         <p className="text-lg font-medium text-emerald-400">Thank you!</p>
         <p className="mt-2 text-sm text-zinc-400">
           Your email client should have opened. If not, email us directly at{" "}
-          <a href="mailto:support@orchestraai.dev" className="text-indigo-400 underline">
-            support@orchestraai.dev
+          <a href="mailto:support@useorchestra.dev" className="text-indigo-400 underline">
+            support@useorchestra.dev
           </a>
         </p>
         <button

@@ -189,7 +189,7 @@ Be respectful. Be constructive. Assume good intent.
 - Focus on the code, not the person
 - If something is unclear, ask -- don't assume
 
-Violations can be reported to hello@orchestraai.dev. Reports are handled
+Violations can be reported to hello@useorchestra.dev. Reports are handled
 confidentially.
 
 ## Questions?

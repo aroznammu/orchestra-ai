@@ -26,6 +26,6 @@ Please act as a Senior DevOps Engineer and execute the following codebase prepar
 Once the code is prepped, generate a new file named `GO_LIVE_CHECKLIST.md` for the user. It must contain the exact manual steps they need to take in their browser to deploy:
 
 1. **Database (Railway):** How to provision a Postgres database and grab the `DATABASE_URL`.
-2. **Backend (Railway):** How to deploy the GitHub repo, set the Root Directory (if needed), input the production `.env` variables (including the DB URL), and get the live API URL (e.g., `https://api.orchestraai.dev`).
+2. **Backend (Railway):** How to deploy the GitHub repo, set the Root Directory (if needed), input the production `.env` variables (including the DB URL), and get the live API URL (e.g., `https://api.useorchestra.dev`).
 3. **Frontend (Vercel):** How to import the GitHub repo, set the Framework Preset to Next.js, set the Root Directory to `frontend`, input the `NEXT_PUBLIC_API_URL`, and deploy.
 4. **Stripe (Live Mode):** How to toggle "Test Mode" off in Stripe, create live prices, create a live webhook pointing to the new Railway URL, and update the Railway environment variables with the live keys.

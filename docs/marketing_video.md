@@ -167,7 +167,7 @@ This is the exact text the avatar will speak. See Section 2 below for the full t
 ```json
 {
   "image_url": "<YOUR_UPLOADED_IMAGE_URL>",
-  "text_input": "Marketing teams are drowning. Nine platforms. Nine dashboards. Nine separate budgets -- and none of them talk to each other. One misconfigured bid on Google Ads can drain five thousand dollars before anyone notices. Your Instagram campaign doesn't know your LinkedIn one is underperforming. Budget gets wasted in silos.\n\nWe built OrchestraAI to fix this.\n\nOne AI layer that connects Twitter, YouTube, TikTok, Pinterest, Facebook, Instagram, LinkedIn, Snapchat, and Google Ads -- all nine -- under a single intelligent orchestrator. You type a natural language command like 'generate a video ad for our summer sale,' and our ten-node LangGraph agent handles everything: intent classification, compliance checking, content generation, AI video creation with Seedance two-point-oh, automated copyright scanning with GPT-4o Vision, policy validation, and cross-platform publishing. All in one request.\n\nBut here is what no other tool does: financial guardrails.\n\nThree-phase bidding that starts fully human-approved and earns autonomy over time. Three-tier spend caps -- daily, weekly, monthly -- that cannot be overridden. Statistical anomaly detection using Z-scores and IQR. And a kill switch that halts all spend across every platform in one click.\n\nEvery campaign you run makes the AI smarter for your business. Our data moat compounds your advantage over time -- your competitors cannot replicate your performance data.\n\nOrchestraAI is live today. Self-host it with Docker in sixty seconds, or use Enterprise Cloud starting at ninety-nine dollars a month. Open-core. Apache two-point-oh licensed.\n\nStop managing nine dashboards. Start orchestrating. Visit orchestra AI dot vercel dot app.",
+  "text_input": "Marketing teams are drowning. Nine platforms. Nine dashboards. Nine separate budgets -- and none of them talk to each other. One misconfigured bid on Google Ads can drain five thousand dollars before anyone notices. Your Instagram campaign doesn't know your LinkedIn one is underperforming. Budget gets wasted in silos.\n\nWe built OrchestraAI to fix this.\n\nOne AI layer that connects Twitter, YouTube, TikTok, Pinterest, Facebook, Instagram, LinkedIn, Snapchat, and Google Ads -- all nine -- under a single intelligent orchestrator. You type a natural language command like 'generate a video ad for our summer sale,' and our ten-node LangGraph agent handles everything: intent classification, compliance checking, content generation, AI video creation with Seedance two-point-oh, automated copyright scanning with GPT-4o Vision, policy validation, and cross-platform publishing. All in one request.\n\nBut here is what no other tool does: financial guardrails.\n\nThree-phase bidding that starts fully human-approved and earns autonomy over time. Three-tier spend caps -- daily, weekly, monthly -- that cannot be overridden. Statistical anomaly detection using Z-scores and IQR. And a kill switch that halts all spend across every platform in one click.\n\nEvery campaign you run makes the AI smarter for your business. Our data moat compounds your advantage over time -- your competitors cannot replicate your performance data.\n\nOrchestraAI is live today. Self-host it with Docker in sixty seconds, or use Enterprise Cloud starting at ninety-nine dollars a month. Open-core. Apache two-point-oh licensed.\n\nStop managing nine dashboards. Start orchestrating. Visit use orchestra dot dev.",
   "voice": "Roger",
   "prompt": "A confident male tech founder in his early thirties presents a product to the camera. He wears a dark navy crew-neck sweater over a white collared shirt. He is seated in a modern, dimly lit studio with a solid matte charcoal background. Soft key light illuminates his face from the left. A subtle cool rim light separates him from the dark background. He speaks directly to the camera with natural hand gestures, occasional nods, and steady eye contact. His expression shifts from serious concern when describing a problem to confident enthusiasm when presenting the solution. The framing is a medium shot from the chest up. The mood is professional, modern, and authoritative -- like a YC demo day pitch.",
   "num_frames": 241,
@@ -214,7 +214,7 @@ result = fal_client.subscribe(
             "or use Enterprise Cloud starting at ninety-nine dollars a month. "
             "Open-core. Apache two-point-oh licensed.\n\n"
             "Stop managing nine dashboards. Start orchestrating. "
-            "Visit orchestra AI dot vercel dot app."
+            "Visit use orchestra dot dev."
         ),
         "voice": "Roger",
         "prompt": (
@@ -283,7 +283,7 @@ Total word count: ~195 words. Target delivery: 60-70 seconds at ~155 wpm (slight
 
 > OrchestraAI is live today. Self-host it with Docker in sixty seconds, or use Enterprise Cloud starting at ninety-nine dollars a month. Open-core. Apache two-point-oh licensed.
 >
-> Stop managing nine dashboards. Start orchestrating. Visit orchestra AI dot vercel dot app.
+> Stop managing nine dashboards. Start orchestrating. Visit use orchestra dot dev.
 
 **Tone:** Warm, inviting, energetic. The closing line ("Stop managing... Start orchestrating.") should land like a tagline -- brief pause before it, then deliver with conviction.
 **Avatar expression:** Slight smile returns. Nods once on the final sentence.
@@ -296,7 +296,7 @@ The raw AI Avatar video is a talking head on a dark background. To make a polish
 
 ### Screen Recordings to Capture
 
-Record these from the live app at `orchestra-ai-wine.vercel.app` (or localhost) using OBS, Loom, or any screen recorder. Record at 1920x1080 in a browser with no bookmarks bar visible.
+Record these from the live app at `useorchestra.dev` (or localhost) using OBS, Loom, or any screen recorder. Record at 1920x1080 in a browser with no bookmarks bar visible.
 
 | Clip | What to Record | Duration | Overlay During |
 |------|---------------|----------|---------------|
@@ -329,7 +329,7 @@ Add these as subtle white-on-transparent text at the bottom of the frame during 
 | 0:40 | Anomaly Detection + Kill Switch |
 | 0:46 | Your Data Moat. Your Competitive Advantage. |
 | 0:52 | Starter $99/mo -- Agency $999/mo |
-| 0:58 | orchestra-ai-wine.vercel.app |
+| 0:58 | useorchestra.dev |
 
 ### Recommended Free Editors
 

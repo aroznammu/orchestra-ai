@@ -66,8 +66,8 @@ In the Railway service **Variables** tab, add every production variable. At mini
 | `STRIPE_WEBHOOK_SECRET` | Live webhook signing secret from Phase 4 (`whsec_...`) |
 | `STRIPE_STARTER_PRICE_ID` | Live price ID from Phase 4 (`price_...`) |
 | `STRIPE_AGENCY_PRICE_ID` | Live price ID from Phase 4 (`price_...`) |
-| `FRONTEND_URL` | Your Vercel domain (e.g. `https://orchestraai.vercel.app`) |
-| `CORS_ORIGINS` | `["https://orchestraai.vercel.app"]` |
+| `FRONTEND_URL` | `https://useorchestra.dev` |
+| `CORS_ORIGINS` | `["https://useorchestra.dev"]` |
 | `RATE_LIMIT_PER_MINUTE` | `60` (adjust as needed) |
 | `STEALTH_MODE` | `false` (set `true` if you want to hide branding) |
 
@@ -109,12 +109,12 @@ In the Vercel project **Settings** -> **Environment Variables**, add:
 ### 3c. Deploy
 
 1. Click **Deploy**. Vercel builds the Next.js app with `output: "standalone"`.
-2. Once deployed, note the production URL (e.g. `https://orchestraai.vercel.app`).
-3. **Go back to Railway** and update `FRONTEND_URL` and `CORS_ORIGINS` to this Vercel URL.
+2. Once deployed, add your custom domain `useorchestra.dev` in Vercel **Settings** -> **Domains**.
+3. **Go back to Railway** and update `FRONTEND_URL` to `https://useorchestra.dev` and `CORS_ORIGINS` to `["https://useorchestra.dev"]`.
 
 ### 3d. Verify
 
-1. Open `https://orchestraai.vercel.app` in your browser.
+1. Open `https://useorchestra.dev` in your browser.
 2. The login page should load.
 3. Open DevTools -> Network and confirm API calls hit your Railway domain, not localhost.
 
@@ -228,15 +228,15 @@ Before announcing publicly:
 ## Custom Domain (Optional)
 
 ### Backend (Railway)
-1. In Railway service **Settings** -> **Networking**, add your domain (e.g. `api.orchestraai.dev`).
-2. Add the CNAME record Railway provides to your DNS.
-3. Update Vercel env var `NEXT_PUBLIC_API_URL` to `https://api.orchestraai.dev/api/v1`.
-4. Update Stripe webhook endpoint URL to `https://api.orchestraai.dev/api/v1/billing/webhook`.
+1. In Railway service **Settings** -> **Networking**, add your domain (e.g. `api.useorchestra.dev`).
+2. Add a CNAME record in Cloudflare DNS pointing `api` to your Railway domain.
+3. Update Vercel env var `NEXT_PUBLIC_API_URL` to `https://api.useorchestra.dev/api/v1`.
+4. Update Stripe webhook endpoint URL to `https://api.useorchestra.dev/api/v1/billing/webhook`.
 
 ### Frontend (Vercel)
-1. In Vercel **Settings** -> **Domains**, add your domain (e.g. `app.orchestraai.dev`).
-2. Add the CNAME record Vercel provides to your DNS.
-3. Update Railway env var `FRONTEND_URL` to `https://app.orchestraai.dev`.
+1. In Vercel **Settings** -> **Domains**, add `useorchestra.dev`.
+2. Add a CNAME record in Cloudflare DNS pointing `@` to `cname.vercel-dns.com` (DNS only, grey cloud).
+3. Update Railway env var `FRONTEND_URL` to `https://useorchestra.dev`.
 
 ---
 
@@ -263,8 +263,8 @@ STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_STARTER_PRICE_ID=price_...
 STRIPE_AGENCY_PRICE_ID=price_...
-FRONTEND_URL=https://your-app.vercel.app
-CORS_ORIGINS=["https://your-app.vercel.app"]
+FRONTEND_URL=https://useorchestra.dev
+CORS_ORIGINS=["https://useorchestra.dev"]
 RATE_LIMIT_PER_MINUTE=60
 ```
 

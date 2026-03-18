@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard, KeyRound, Settings, Users } from "lucide-react";
+import { CreditCard, KeyRound, Lock, Users } from "lucide-react";
 import Link from "next/link";
 
 const SECTIONS = [
@@ -10,6 +10,13 @@ const SECTIONS = [
     label: "Billing & Plans",
     description: "Manage your subscription, upgrade plans, and view invoices.",
     icon: CreditCard,
+    ready: true,
+  },
+  {
+    href: "/settings/password",
+    label: "Change Password",
+    description: "Update your account password.",
+    icon: Lock,
     ready: true,
   },
   {

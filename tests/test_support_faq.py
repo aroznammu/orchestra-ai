@@ -375,7 +375,7 @@ class TestSupportAgentReply:
         ):
             result = await get_support_reply("hello", "tenant-1")
 
-        assert "unable to process" in result.reply.lower() or "support@orchestraai.dev" in result.reply
+        assert "unable to process" in result.reply.lower() or "support@useorchestra.dev" in result.reply
 
     @pytest.mark.asyncio
     async def test_get_support_reply_returns_sanitized(self):

@@ -209,7 +209,7 @@ a54fb8b  fix: wrap useSearchParams in Suspense boundary for Vercel build
    - Phase 4: Stripe live mode (create live products, swap keys)
    - Phase 5: Smoke tests (health, auth, paywall, checkout, video gen)
 
-3. **Deploy promotional website** -- Separate Vercel project (root: `website/`), configure domain (e.g., `www.orchestraai.dev`).
+3. **Deploy promotional website** -- Separate Vercel project (root: `website/`), configure domain (e.g., `www.useorchestra.dev`).
 
 ### Short-Term: Launch Marketing
 
@@ -220,7 +220,7 @@ a54fb8b  fix: wrap useSearchParams in Suspense boundary for Vercel build
    - Instagram Reels (9:16)
    - Embed on promotional website
 
-5. **Custom domains** -- Set up `api.orchestraai.dev`, `app.orchestraai.dev`, `orchestraai.dev`.
+5. **Custom domains** -- Set up `api.useorchestra.dev` and `useorchestra.dev`.
 
 ### Medium-Term: Address Technical Debt
 

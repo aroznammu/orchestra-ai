@@ -152,6 +152,18 @@ export async function patch<T = unknown>(
   return handleResponse<T>(res);
 }
 
+export async function put<T = unknown>(
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "PUT",
+    headers: headers(),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return handleResponse<T>(res);
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator types
 // ---------------------------------------------------------------------------
@@ -182,6 +194,16 @@ export async function login(
   const data = await post<TokenResponse>("/auth/login", { email, password });
   setToken(data.access_token);
   return data;
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await put("/auth/password", {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
 }
 
 export async function loginWithApiKey(apiKey: string): Promise<void> {

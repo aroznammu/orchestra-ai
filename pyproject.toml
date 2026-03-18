@@ -2,7 +2,7 @@
 name = "orchestraai"
 version = "0.1.0"
 description = "AI-Native Marketing Orchestration Platform"
-authors = ["OrchestraAI <hello@orchestraai.dev>"]
+authors = ["OrchestraAI <hello@useorchestra.dev>"]
 license = "Apache-2.0"
 readme = "README.md"
 packages = [{include = "orchestra", from = "src"}]

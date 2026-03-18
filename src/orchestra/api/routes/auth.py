@@ -40,6 +40,11 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
 class UserResponse(BaseModel):
     user_id: str
     email: str
@@ -171,3 +176,38 @@ async def get_me(
         tenant_id=current_user.tenant_id,
         role=current_user.role,
     )
+
+
+@router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: CurrentUser,
+) -> None:
+    """Change the authenticated user's password."""
+    try:
+        session_ctx = await _get_session()
+        if session_ctx is None:
+            raise RuntimeError("No DB")
+        async with session_ctx as db:
+            result = await db.execute(
+                select(User).where(User.id == uuid.UUID(current_user.sub))
+            )
+            user = result.scalar_one_or_none()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            if not verify_password(request.current_password, user.hashed_password):
+                raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+            user.hashed_password = hash_password(request.new_password)
+            await db.commit()
+            logger.info("password_changed", user_id=current_user.sub)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("change_password_error", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable. Please try again later.",
+        )

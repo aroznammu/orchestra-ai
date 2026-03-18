@@ -25,8 +25,8 @@ export const NAV_ITEMS = [
   { href: "/contact", label: "Contact" },
 ] as const;
 
-export const DASHBOARD_URL = "https://orchestra-ai-wine.vercel.app";
-export const SUPPORT_EMAIL = "support@orchestraai.dev";
+export const DASHBOARD_URL = "https://useorchestra.dev";
+export const SUPPORT_EMAIL = "support@useorchestra.dev";
 
 /* ------------------------------------------------------------------ */
 /*  Platforms                                                           */
@@ -462,7 +462,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "My platform connection shows as inactive. What should I do?",
         answer:
-          "Platform connections can become inactive if the OAuth token expires. Go to Settings > Platforms, disconnect the inactive platform, and reconnect it. This will refresh your authorization tokens. If the issue persists, contact support@orchestraai.dev.",
+          "Platform connections can become inactive if the OAuth token expires. Go to Settings > Platforms, disconnect the inactive platform, and reconnect it. This will refresh your authorization tokens. If the issue persists, contact support@useorchestra.dev.",
       },
     ],
   },
@@ -517,7 +517,7 @@ export const FAQ_DATA: FAQCategory[] = [
       {
         question: "The AI Orchestrator returned an error. What should I do?",
         answer:
-          "First, try rephrasing your request more specifically. If the error persists, check that you have an active subscription (Settings > Billing) and that your platform connections are active. For persistent issues, contact support@orchestraai.dev with your trace ID (shown in the error response).",
+          "First, try rephrasing your request more specifically. If the error persists, check that you have an active subscription (Settings > Billing) and that your platform connections are active. For persistent issues, contact support@useorchestra.dev with your trace ID (shown in the error response).",
       },
     ],
   },

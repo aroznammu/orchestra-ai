@@ -64,7 +64,7 @@ STRICT RULES — you MUST follow these at all times:
    with: "I can help you with product features and usage questions. For technical \
    architecture details, please contact our engineering team."
 6. Keep responses concise, helpful, and professional.
-7. If you don't know the answer, say so honestly and suggest contacting support@orchestraai.dev.
+7. If you don't know the answer, say so honestly and suggest contacting support@useorchestra.dev.
 """
 
 
@@ -263,7 +263,7 @@ async def get_support_reply(
     if reply is None:
         reply = (
             "I'm sorry, I'm unable to process your request right now. "
-            "Please try again shortly or contact support@orchestraai.dev for assistance."
+            "Please try again shortly or contact support@useorchestra.dev for assistance."
         )
 
     reply = sanitize_response(reply)
@@ -434,7 +434,7 @@ DEFAULT_FAQS: list[dict[str, Any]] = [
         "answer": (
             "Platform connections can become inactive if the OAuth token expires. Go to Settings > "
             "Platforms, disconnect the inactive platform, and reconnect it. This will refresh your "
-            "authorization tokens. If the issue persists, contact support@orchestraai.dev."
+            "authorization tokens. If the issue persists, contact support@useorchestra.dev."
         ),
         "sort_order": 0,
     },
@@ -444,7 +444,7 @@ DEFAULT_FAQS: list[dict[str, Any]] = [
         "answer": (
             "First, try rephrasing your request more specifically. If the error persists, check that "
             "you have an active subscription (Settings > Billing) and that your platform connections "
-            "are active. For persistent issues, contact support@orchestraai.dev with your trace ID "
+            "are active. For persistent issues, contact support@useorchestra.dev with your trace ID "
             "(shown in the error response)."
         ),
         "sort_order": 1,

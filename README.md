@@ -359,7 +359,7 @@ zero-ops infrastructure.
 
 The open-source core is the full engine -- the Enterprise Cloud adds the cockpit.
 
-> Interested in early access? Reach out at **enterprise@orchestraai.dev**
+> Interested in early access? Reach out at **enterprise@useorchestra.dev**
 
 ## License
 
