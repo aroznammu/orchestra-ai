@@ -55,13 +55,37 @@ class Alert(BaseModel):
 
 
 class AlertManager:
-    """Manages budget and risk alerts."""
+    """Manages budget and risk alerts with optional email notification."""
 
-    def __init__(self) -> None:
+    def __init__(self, notify_email: str | None = None) -> None:
         self._alerts: list[Alert] = []
-        self._fired_thresholds: dict[str, set[int]] = {}  # tenant -> set of fired %s
+        self._fired_thresholds: dict[str, set[int]] = {}
+        self._notify_email = notify_email
 
-    def check_budget_thresholds(
+    async def _notify(self, alert: Alert) -> None:
+        """Send email for WARNING+ severity alerts."""
+        if not self._notify_email:
+            return
+        if alert.severity in (AlertSeverity.INFO,):
+            return
+
+        try:
+            from orchestra.notifications.email import send_alert_email
+
+            subject = f"[OrchestraAI {alert.severity.value.upper()}] {alert.alert_type.value}"
+            body = (
+                f"Tenant: {alert.tenant_id}\n"
+                f"Severity: {alert.severity.value}\n"
+                f"Alert: {alert.message}\n\n"
+                f"Details: {alert.details}\n\n"
+                f"Time: {alert.created_at}\n"
+                f"Alert ID: {alert.id}"
+            )
+            await send_alert_email(self._notify_email, subject, body)
+        except Exception as e:
+            logger.warning("alert_notify_failed", alert_id=alert.id, error=str(e))
+
+    async def check_budget_thresholds(
         self,
         tenant_id: str,
         current_spend: float,
@@ -111,11 +135,12 @@ class AlertManager:
                     utilization=round(utilization_pct, 1),
                     severity=threshold["severity"].value,
                 )
+                await self._notify(alert)
 
         self._fired_thresholds[tenant_id] = fired
         return new_alerts
 
-    def fire_alert(
+    async def fire_alert(
         self,
         tenant_id: str,
         alert_type: AlertType,
@@ -141,6 +166,7 @@ class AlertManager:
             message=message,
         )
 
+        await self._notify(alert)
         return alert
 
     def acknowledge(self, alert_id: str, acknowledged_by: str) -> bool:

@@ -19,6 +19,7 @@ from orchestra.api.routes import (
     auth,
     billing,
     campaigns,
+    experiments,
     faq,
     gdpr,
     health,
@@ -170,6 +171,7 @@ app.include_router(audit.router, prefix="/api/v1")
 app.include_router(kill_switch.router, prefix="/api/v1")
 app.include_router(support.router, prefix="/api/v1")
 app.include_router(faq.router, prefix="/api/v1")
+app.include_router(experiments.router, prefix="/api/v1")
 
 # --- Dashboard UI ---
 

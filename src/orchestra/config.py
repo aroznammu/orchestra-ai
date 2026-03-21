@@ -92,6 +92,17 @@ class Settings(BaseSettings):
     def has_fal(self) -> bool:
         return bool(self.fal_api_key.get_secret_value())
 
+    # SMTP (email notifications)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from_email: str = "alerts@useorchestra.dev"
+
+    @property
+    def has_smtp(self) -> bool:
+        return bool(self.smtp_host)
+
     # Stripe billing
     stripe_secret_key: SecretStr = SecretStr("")
     stripe_webhook_secret: SecretStr = SecretStr("")

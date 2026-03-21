@@ -67,6 +67,18 @@ STRICT RULES — you MUST follow these at all times:
 7. If you don't know the answer, say so honestly and suggest contacting support@useorchestra.dev.
 """
 
+UPSELL_RULES = """\
+
+UPSELL GUIDELINES (apply ONLY when the user is on the Starter plan):
+- When the user asks about features exclusive to the Agency plan (AI video generation, \
+  kill switch override, Data Moat Engine, custom compliance rule sets, advanced bid \
+  optimization, priority support), naturally mention the feature is available on Agency.
+- Frame it as a helpful suggestion, NOT a hard sell. Example: "That feature is part of \
+  the Agency plan — if you'd like to unlock it, you can upgrade anytime from Settings > Billing."
+- NEVER upsell to users already on the Agency plan or Enterprise.
+- Limit upsell mentions to ONE per conversation turn.
+"""
+
 
 class SupportResponse(BaseModel):
     reply: str
@@ -108,6 +120,7 @@ def _build_messages(
     chat_history: list[dict[str, str]],
     rag_context: list[dict[str, Any]],
     faq_context: list[dict[str, str]],
+    tenant_plan: str | None = None,
 ) -> list[dict[str, str]]:
     """Assemble the LLM message list with system prompt, context, and history."""
     context_parts: list[str] = []
@@ -128,6 +141,13 @@ def _build_messages(
         context_parts.append(f"Matching FAQ entries:\n{faq_text}")
 
     system_content = SYSTEM_PROMPT
+
+    if tenant_plan and tenant_plan.lower() in ("free", "starter", "trialing"):
+        system_content += UPSELL_RULES
+        system_content += f"\nThe current user is on the **{tenant_plan}** plan."
+    elif tenant_plan:
+        system_content += f"\nThe current user is on the **{tenant_plan}** plan. Do NOT upsell."
+
     if context_parts:
         system_content += (
             "\n\nUse the following context to answer the user's question. "
@@ -216,6 +236,7 @@ async def get_support_reply(
     tenant_id: str,
     chat_history: list[dict[str, str]] | None = None,
     faq_entries: list[dict[str, str]] | None = None,
+    tenant_plan: str | None = None,
 ) -> SupportResponse:
     """Generate an AI support reply with RAG context and guardrails.
 
@@ -224,6 +245,7 @@ async def get_support_reply(
         tenant_id: For tenant-scoped RAG retrieval.
         chat_history: Previous messages as [{"role": "user"|"assistant", "content": "..."}].
         faq_entries: Matching FAQ rows as [{"question": "...", "answer": "..."}].
+        tenant_plan: Current subscription plan (e.g. "starter", "agency") for upsell logic.
 
     Returns:
         SupportResponse with sanitized reply, sources, and matched FAQs.
@@ -238,7 +260,7 @@ async def get_support_reply(
         r["payload"].get("source", "knowledge_base") for r in rag_results if r.get("payload")
     ]
 
-    messages = _build_messages(user_message, chat_history, rag_results, faq_entries)
+    messages = _build_messages(user_message, chat_history, rag_results, faq_entries, tenant_plan)
 
     model_name, tier = route_model(TaskComplexity.SIMPLE)
     settings = get_settings()

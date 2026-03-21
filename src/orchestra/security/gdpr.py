@@ -6,6 +6,8 @@ from uuid import uuid4
 
 import structlog
 from pydantic import BaseModel, Field
+from sqlalchemy import delete as sa_delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger("security.gdpr")
 
@@ -130,16 +132,11 @@ class GDPRManager:
         self,
         request_id: str,
         confirmation_token: str,
+        db: AsyncSession | None = None,
     ) -> DataDeletionRequest | None:
         """Process a confirmed data deletion.
 
-        In production, this would:
-        1. Verify confirmation token
-        2. Delete from PostgreSQL (users, campaigns, audit logs, etc.)
-        3. Delete from Qdrant (all vector collections)
-        4. Delete from Redis (cached data)
-        5. Revoke all OAuth tokens
-        6. Log deletion for compliance records (retain only the log)
+        Deletes from PostgreSQL (cascade), Qdrant (vectors), and logs for compliance.
         """
         for req in self._deletion_requests:
             if req.id == request_id and req.status == "pending":
@@ -149,8 +146,7 @@ class GDPRManager:
 
                 req.status = "processing"
 
-                # Delete across all data stores
-                categories = await self._delete_tenant_data(req.tenant_id)
+                categories = await self._delete_tenant_data(req.tenant_id, db=db)
 
                 req.status = "completed"
                 req.completed_at = datetime.now(UTC).isoformat()
@@ -246,18 +242,104 @@ class GDPRManager:
             "spend_records": [],
         }
 
-    async def _delete_tenant_data(self, tenant_id: str) -> list[str]:
-        """Delete all tenant data across stores (placeholder)."""
-        from orchestra.rag.indexer import delete_tenant_data
+    async def _delete_tenant_data(
+        self, tenant_id: str, db: AsyncSession | None = None,
+    ) -> list[str]:
+        """Delete all tenant data from PostgreSQL and Qdrant."""
+        import uuid as _uuid
 
-        # Vector store cleanup
-        await delete_tenant_data(tenant_id)
+        from orchestra.db.models import (
+            APIKey,
+            AuditLog,
+            Campaign,
+            CampaignPost,
+            ChatMessage,
+            ChatSession,
+            Experiment,
+            KillSwitchEventLog,
+            PlatformConnection,
+            SpendRecord,
+            Tenant,
+            User,
+        )
 
-        categories = [
-            "users", "campaigns", "posts", "analytics",
-            "platform_connections", "oauth_tokens", "agent_memory",
-            "performance_embeddings", "tenant_model",
-        ]
+        categories: list[str] = []
+        tid = _uuid.UUID(tenant_id)
+
+        if db is not None:
+            session_ids_result = await db.execute(
+                sa_delete(ChatMessage).where(
+                    ChatMessage.session_id.in_(
+                        ChatSession.__table__.select()
+                        .where(ChatSession.tenant_id == tid)
+                        .with_only_columns(ChatSession.id)
+                    )
+                )
+            )
+            categories.append(f"chat_messages:{session_ids_result.rowcount}")
+
+            for model, label in [
+                (ChatSession, "chat_sessions"),
+            ]:
+                result = await db.execute(
+                    sa_delete(model).where(model.tenant_id == tid)
+                )
+                categories.append(f"{label}:{result.rowcount}")
+
+            campaign_ids_result = await db.execute(
+                Campaign.__table__.select()
+                .where(Campaign.tenant_id == tid)
+                .with_only_columns(Campaign.id)
+            )
+            campaign_ids = [row[0] for row in campaign_ids_result.fetchall()]
+
+            if campaign_ids:
+                for model, label in [
+                    (CampaignPost, "campaign_posts"),
+                    (Experiment, "experiments"),
+                ]:
+                    result = await db.execute(
+                        sa_delete(model).where(model.campaign_id.in_(campaign_ids))
+                    )
+                    categories.append(f"{label}:{result.rowcount}")
+
+            for model, label in [
+                (Campaign, "campaigns"),
+                (SpendRecord, "spend_records"),
+                (AuditLog, "audit_logs"),
+                (APIKey, "api_keys"),
+                (PlatformConnection, "platform_connections"),
+            ]:
+                result = await db.execute(
+                    sa_delete(model).where(model.tenant_id == tid)
+                )
+                categories.append(f"{label}:{result.rowcount}")
+
+            ks_result = await db.execute(
+                sa_delete(KillSwitchEventLog).where(
+                    KillSwitchEventLog.tenant_id == tenant_id
+                )
+            )
+            categories.append(f"kill_switch_events:{ks_result.rowcount}")
+
+            user_result = await db.execute(
+                sa_delete(User).where(User.tenant_id == tid)
+            )
+            categories.append(f"users:{user_result.rowcount}")
+
+            tenant_result = await db.execute(
+                sa_delete(Tenant).where(Tenant.id == tid)
+            )
+            categories.append(f"tenant:{tenant_result.rowcount}")
+
+            await db.flush()
+
+        try:
+            from orchestra.rag.indexer import delete_tenant_data
+            await delete_tenant_data(tenant_id)
+            categories.append("vector_store")
+        except Exception as e:
+            logger.warning("qdrant_cleanup_failed", tenant_id=tenant_id, error=str(e))
 
         logger.info("tenant_data_purged", tenant_id=tenant_id, categories=categories)
         return categories

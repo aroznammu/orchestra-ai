@@ -72,6 +72,9 @@ stripe = ">=7.0"
 fal-client = ">=0.5"
 ffmpeg-python = ">=0.2"
 
+# Email notifications
+aiosmtplib = "^3.0"
+
 # Utilities
 python-multipart = "^0.0.18"
 python-dotenv = "^1.0"

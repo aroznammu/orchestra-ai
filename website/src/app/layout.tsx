@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.useorchestra.dev"),
   title: {
     default: "OrchestraAI — AI-Native Marketing Orchestration",
     template: "%s | OrchestraAI",
@@ -29,6 +30,15 @@ export const metadata: Metadata = {
     "AI video generation",
     "marketing AI",
   ],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "OrchestraAI",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

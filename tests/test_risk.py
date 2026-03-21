@@ -46,9 +46,9 @@ def test_anomaly_detector_records_baseline():
     assert "is_anomaly" in result
 
 
-def test_alert_manager_fires_at_50_pct():
+async def test_alert_manager_fires_at_50_pct():
     mgr = AlertManager()
-    alerts = mgr.check_budget_thresholds(
+    alerts = await mgr.check_budget_thresholds(
         tenant_id="t1",
         current_spend=260.0,
         budget_cap=500.0,
@@ -57,14 +57,14 @@ def test_alert_manager_fires_at_50_pct():
     assert "budget_50pct" in types
 
 
-def test_alert_manager_fires_at_75_and_90():
+async def test_alert_manager_fires_at_75_and_90():
     mgr = AlertManager()
-    alerts_75 = mgr.check_budget_thresholds(
+    alerts_75 = await mgr.check_budget_thresholds(
         tenant_id="t1",
         current_spend=380.0,
         budget_cap=500.0,
     )
-    alerts_90 = mgr.check_budget_thresholds(
+    alerts_90 = await mgr.check_budget_thresholds(
         tenant_id="t1",
         current_spend=460.0,
         budget_cap=500.0,
@@ -74,10 +74,10 @@ def test_alert_manager_fires_at_75_and_90():
     assert "budget_90pct" in all_types
 
 
-def test_alert_manager_no_duplicate_fires():
+async def test_alert_manager_no_duplicate_fires():
     mgr = AlertManager()
-    mgr.check_budget_thresholds("t1", 260.0, 500.0)
-    alerts2 = mgr.check_budget_thresholds("t1", 260.0, 500.0)
+    await mgr.check_budget_thresholds("t1", 260.0, 500.0)
+    alerts2 = await mgr.check_budget_thresholds("t1", 260.0, 500.0)
     assert len(alerts2) == 0
 
 

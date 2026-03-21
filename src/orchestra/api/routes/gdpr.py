@@ -6,7 +6,7 @@ import structlog
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
-from orchestra.api.deps import CurrentUser
+from orchestra.api.deps import CurrentUser, DbSession
 from orchestra.security.gdpr import get_gdpr_manager
 from orchestra.security.rbac import Permission, check_permission
 
@@ -102,13 +102,14 @@ async def request_data_deletion(
 async def confirm_data_deletion(
     request_id: str,
     confirmation_token: str,
+    db: DbSession,
     user: CurrentUser = None,
 ) -> DeletionResponse:
     """Confirm and execute data deletion."""
     check_permission(user.role, Permission.DATA_DELETE)
 
     manager = get_gdpr_manager()
-    result = await manager.process_data_deletion(request_id, confirmation_token)
+    result = await manager.process_data_deletion(request_id, confirmation_token, db=db)
 
     if not result:
         raise HTTPException(status_code=404, detail="Deletion request not found or invalid token")

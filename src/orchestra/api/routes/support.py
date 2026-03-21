@@ -17,6 +17,7 @@ from orchestra.db.models import (
     ChatSession,
     ChatSessionStatus,
     FAQEntry,
+    Tenant,
 )
 
 logger = structlog.get_logger("api.support")
@@ -201,11 +202,18 @@ async def chat(
         if any(word in f.question.lower() for word in query_lower.split() if len(word) > 3)
     ][:5]
 
+    tenant_plan: str | None = None
+    tenant_result = await db.execute(
+        select(Tenant.subscription_plan).where(Tenant.id == uuid.UUID(user.tenant_id))
+    )
+    tenant_plan = tenant_result.scalar_one_or_none()
+
     support_response = await get_support_reply(
         user_message=request.message,
         tenant_id=user.tenant_id,
         chat_history=chat_history,
         faq_entries=matched_faqs,
+        tenant_plan=tenant_plan,
     )
 
     assistant_msg = ChatMessage(
