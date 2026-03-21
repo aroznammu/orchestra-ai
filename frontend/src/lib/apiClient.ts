@@ -187,6 +187,22 @@ export interface OrchestrateResponse {
 // Auth convenience functions
 // ---------------------------------------------------------------------------
 
+export async function register(
+  email: string,
+  password: string,
+  fullName: string,
+  tenantName?: string,
+): Promise<TokenResponse> {
+  const data = await post<TokenResponse>("/auth/register", {
+    email,
+    password,
+    full_name: fullName,
+    tenant_name: tenantName || fullName + "'s Workspace",
+  });
+  setToken(data.access_token);
+  return data;
+}
+
 export async function login(
   email: string,
   password: string,
