@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   get,
+  getSubscriptionStatus,
   type CampaignListResponse,
   type OverviewResponse,
   type PlatformMetrics,
+  type SubscriptionStatus,
 } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -14,8 +16,11 @@ import {
   DollarSign,
   type LucideIcon,
   Megaphone,
+  Sparkles,
   TrendingUp,
+  Zap,
 } from "lucide-react";
+import Link from "next/link";
 import {
   Bar,
   BarChart,
@@ -124,6 +129,44 @@ function buildChartData(
 }
 
 // ---------------------------------------------------------------------------
+// Subscription banner
+// ---------------------------------------------------------------------------
+
+function SubscriptionBanner({ sub }: { sub: SubscriptionStatus | undefined }) {
+  if (!sub) return null;
+  const isActive = sub.status === "active" || sub.status === "trialing";
+  if (isActive && sub.plan !== "free") return null;
+
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/60 via-indigo-900/40 to-purple-950/60 p-6">
+      <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-indigo-400" />
+            <h2 className="text-lg font-semibold text-zinc-100">
+              Unlock AI-Powered Marketing
+            </h2>
+          </div>
+          <p className="text-sm text-zinc-400">
+            Subscribe to start orchestrating campaigns across 9 platforms with
+            AI video generation, financial guardrails, and cross-platform
+            intelligence.
+          </p>
+        </div>
+        <Link
+          href="/settings/billing"
+          className="flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+        >
+          <Zap className="h-4 w-4" />
+          Choose a Plan
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Skeleton components
 // ---------------------------------------------------------------------------
 
@@ -157,6 +200,12 @@ function ChartSkeleton() {
 export default function DashboardPage() {
   const overview = useOverview();
   const campaigns = useCampaigns();
+  const subQuery = useQuery<SubscriptionStatus>({
+    queryKey: ["billing-status"],
+    queryFn: getSubscriptionStatus,
+    retry: 1,
+    staleTime: 60_000,
+  });
 
   const isLoading = overview.isLoading || campaigns.isLoading;
   const hasError = overview.isError && campaigns.isError;
@@ -176,6 +225,8 @@ export default function DashboardPage() {
           Cross-platform marketing performance at a glance
         </p>
       </div>
+
+      <SubscriptionBanner sub={subQuery.data} />
 
       {hasError && (
         <div className="flex items-center gap-2 rounded-lg border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400">
