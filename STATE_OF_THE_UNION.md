@@ -1,9 +1,9 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-01 (latest session)
+**Updated:** 2026-03-22 (latest session -- round 8 redesign)
 **Branch:** `master` (up to date with `origin/master`)
 **Test Suite:** 355 tests, all passing (14 test modules)
-**Commits:** 32 total
+**Commits:** 36 total
 
 ---
 
@@ -26,9 +26,9 @@ Since the previous state-of-the-union, the following milestones were completed:
 9. **Vercel Analytics + Speed Insights** -- Enabled on both dashboard and marketing website.
 10. **Redis connected** -- Railway Redis service linked to backend.
 
-### Marketing Website Redesign (7 rounds, completed 2026-03-01)
+### Marketing Website Redesign (8 rounds, completed 2026-03-01)
 
-The marketing website underwent 7 iterative redesign passes based on detailed design feedback (documented in `docs/website_redesign1.md` through `docs/website_redesign7.md`), pushing it from ~6/10 to top-tier SaaS quality. Key changes:
+The marketing website underwent 8 iterative redesign passes based on detailed design feedback (documented in `docs/website_redesign1.md` through `docs/website_redesign8.md`), pushing it from ~6/10 to top-tier SaaS quality. Key changes:
 
 **Visual Identity & Brand System:**
 - Dark + AI-native + glow aesthetic with primary `#0B0B0F` and surface `#111117` backgrounds
@@ -51,11 +51,14 @@ The marketing website underwent 7 iterative redesign passes based on detailed de
 - Trust Metrics Bar with "Built by engineers" credibility line
 - "A New Category" positioning section with 4 pillars (AI-Native, Zero Infra, Self-Improving, Dev-First)
 - Developer Section with syntax-highlighted code snippet and technical feature checklist
-- **Interactive Pipeline Demo** -- Full interactive 2D DAG visualization:
-  - `PipelineCanvas`: 8 clickable nodes with status-based glow (idle/running/success/failed), SVG edges with animated data pulse dots, sequential pipeline run simulation on load
-  - `InspectorPanel`: Slide-in panel with streaming log viewer (character-by-character typing), status badges, duration, node details
-  - `OrbitalAccent`: CSS/Framer Motion orbital animation (4 glowing dots around central "AI" node) as lightweight 3D accent
-  - Status legend and interaction hints
+- **Interactive Pipeline Demo -- Hybrid 3D/2D** (redesign round 8):
+  - `GraphCanvas3D`: Full Three.js (React Three Fiber) 3D scene for desktop -- 8 sphere-geometry nodes in 3D space with emissive glow materials, status-based point lights, Line edges, animated particles traveling along active edges, `OrbitControls` with damping and auto-rotate, `Html` labels from drei
+  - `PipelineCanvas`: 2D SVG/CSS fallback for mobile/low-perf -- 8 clickable nodes with status-based glow, SVG edges with animated data pulse dots, sequential pipeline run simulation on load
+  - `useIs3DCapable`: Capability detection hook (viewport >= 1024px + WebGL2 support) for automatic 3D/2D switching
+  - `pipelineData.ts`: Shared data layer (node definitions with 3D z-coordinates, edges, status color mappings, hex/emissive tables)
+  - `InspectorPanel`: Slide-in panel with streaming log viewer, shared between 3D and 2D modes
+  - Loading skeleton shown while Three.js chunk downloads on desktop
+  - New dependencies: `three`, `@react-three/fiber`, `@react-three/drei`
 
 **Polish & Performance:**
 - All section spacing increased to `py-28 sm:py-32` for breathing room
@@ -63,7 +66,7 @@ The marketing website underwent 7 iterative redesign passes based on detailed de
 - Section entrance stagger timing refined
 - Feature descriptions shortened for lighter feel
 - All components lazy-loaded with `next/dynamic` and `ssr: false` where appropriate
-- Zero new npm dependencies added for the entire redesign
+- HeroPipeline font sizes increased for readability (node boxes, labels, numbers all scaled up)
 
 ---
 
@@ -114,7 +117,7 @@ Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
 | Contact | `/contact` | Support channels (Email, Dashboard Chat, GitHub Issues), contact form |
 | Demo | `/demo` | Embedded video player, key feature screenshots, "Try it yourself" CTA |
 
-**Website Components (24):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, InspectorPanel, OrbitalAccent, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, plus page-level components.
+**Website Components (27):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, GraphCanvas3D, InspectorPanel, OrbitalAccent, useIs3DCapable, pipelineData, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, plus page-level components.
 
 **Visual System:** Dark + glow brand identity, animated gradient mesh, ambient orbs, noise overlay, neon sweep accents, glassmorphism cards, gradient CTA buttons, soft shadow dividers, section fade transitions.
 
@@ -189,9 +192,9 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | `frontend.yml` | Changes to `frontend/**` | TypeScript check, ESLint, Next.js build |
 | `website.yml` | Changes to `website/**` | TypeScript check, ESLint, Next.js build |
 
-### 2.9 Documentation (24 documents)
+### 2.9 Documentation (25 documents)
 
-architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, website_redesign1.md through website_redesign7.md (7 iterative design feedback docs).
+architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, website_redesign1.md through website_redesign8.md (8 iterative design feedback docs).
 
 ### 2.10 Marketing Assets
 
@@ -248,22 +251,22 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 ```
 Branch:    master
 Remote:    Up to date with origin/master
-Commits:   32 total
+Commits:   36 total
 ```
 
 ### Recent commits (newest first):
 
 ```
+1e1c7d1  feat: add hybrid 3D/2D interactive pipeline demo with Three.js
+c2805a9  fix: increase HeroPipeline node and label font sizes for readability
+0223c5c  feat: complete 7-round marketing website redesign with interactive pipeline demo
+1c3c4ab  docs: comprehensive STATE_OF_THE_UNION update -- all engineering complete
 564ccd3  Add Vercel Analytics and Speed Insights to dashboard and website
 f7ffcf7  Fix 5 technical debt items: auth, encryption, scheduler, bidding, GDPR export
 a595840  Add Sentry error monitoring to backend and frontend
 64d7a6c  Add subscription prompt banner to dashboard for free users
 aa70343  Add Google Search Console verification file
 50203bb  Add OG image and fix sitemap for production
-df4123c  feat: add signup/registration flow to dashboard login page
-28d1da8  docs: update STATE_OF_THE_UNION.md — reflect 6 new features, deployment status, resolved debt
-bfd98a1  feat: implement 6 high-impact features — SEO, OG tags, upsell support, experiments API, email alerts, GDPR fix
-faba8be  feat: redesign promotional website with premium dark aesthetic, new components, and /demo page
 ```
 
 ---
@@ -272,7 +275,7 @@ faba8be  feat: redesign promotional website with premium dark aesthetic, new com
 
 ### Marketing & Growth (no engineering blockers)
 
-1. **Deploy updated marketing website** -- The 7 rounds of redesign work need to be pushed to production on Vercel.
+1. ~~**Deploy updated marketing website**~~ -- Completed. All 8 rounds of redesign (including hybrid 3D/2D pipeline demo) pushed to production on Vercel.
 2. **Upload marketing videos** to platforms:
    - Product Hunt (16:9 + thumbnail)
    - Twitter/X launch thread (9:16)
@@ -322,6 +325,7 @@ faba8be  feat: redesign promotional website with premium dark aesthetic, new com
 | Website ESLint | Zero errors |
 | Website build (next build) | Success (11 static pages including sitemap.xml) |
 | Stripe live payment | Tested ($99 charged and refunded) |
+| Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
 | Git working tree | Clean |
 
 ---
