@@ -2,49 +2,20 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, BrainCircuit, Video, ShieldCheck, BarChart3, Database, Eye } from "lucide-react";
-import VideoEmbed from "@/components/VideoEmbed";
+import { ArrowRight } from "lucide-react";
+import SectionHeading from "@/components/SectionHeading";
 import CTABanner from "@/components/CTABanner";
+import ContentCreationScene from "@/components/demo/scenes/ContentCreationScene";
+import ComplianceScene from "@/components/demo/scenes/ComplianceScene";
+import CrossPlatformScene from "@/components/demo/scenes/CrossPlatformScene";
+import DashboardScene from "@/components/demo/scenes/DashboardScene";
 import { DASHBOARD_URL } from "@/lib/constants";
-
-const DEMO_FEATURES = [
-  {
-    icon: BrainCircuit,
-    title: "AI Orchestrator",
-    description: "Type a natural language command and watch the 10-node agent pipeline execute in real-time.",
-  },
-  {
-    icon: Video,
-    title: "Video Generation",
-    description: "Generate marketing videos from text descriptions with automatic IP compliance scanning.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Financial Guardrails",
-    description: "See the 3-tier spend caps and kill switch in action protecting your budget.",
-  },
-  {
-    icon: BarChart3,
-    title: "Cross-Platform Analytics",
-    description: "Unified dashboard showing normalized ROI across all 9 connected platforms.",
-  },
-  {
-    icon: Database,
-    title: "Data Moat Engine",
-    description: "Watch your competitive advantage compound as campaigns feed the intelligence flywheel.",
-  },
-  {
-    icon: Eye,
-    title: "Visual Compliance",
-    description: "GPT-4o Vision scans every video frame for IP violations before delivery.",
-  },
-];
 
 export default function DemoPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-6 py-24">
+      {/* ============== SCENE 1: Hero Intro ============== */}
+      <section className="relative overflow-hidden px-6 py-28">
         <div className="pointer-events-none absolute inset-0 radial-glow" />
         <div className="mx-auto max-w-4xl text-center">
           <motion.div
@@ -53,17 +24,17 @@ export default function DemoPage() {
             transition={{ duration: 0.5 }}
           >
             <span className="mb-4 inline-block rounded-full border border-indigo-800/60 bg-indigo-950/40 px-4 py-1 text-xs font-medium uppercase tracking-wider text-indigo-300">
-              Product Demo
+              Interactive Walkthrough
             </span>
           </motion.div>
           <motion.h1
-            className="text-4xl font-bold tracking-tight text-zinc-50 sm:text-5xl"
+            className="text-4xl font-extrabold tracking-tight text-zinc-50 sm:text-5xl lg:text-6xl"
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.05 }}
           >
             See OrchestraAI{" "}
-            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               in Action
             </span>
           </motion.h1>
@@ -73,57 +44,78 @@ export default function DemoPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            Watch how a single natural language command orchestrates content creation, compliance
-            checks, and cross-platform publishing.
+            Watch how a single natural language command orchestrates content creation,
+            compliance checks, and cross-platform publishing.
+          </motion.p>
+          <motion.p
+            className="mx-auto mt-3 max-w-md text-sm text-zinc-600"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Scroll through each stage of the AI pipeline below.
           </motion.p>
         </div>
       </section>
 
-      {/* Video */}
-      <section className="px-6 pb-24">
-        <div className="mx-auto max-w-4xl">
-          <VideoEmbed />
-        </div>
+      {/* Divider */}
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* ============== SCENE 2: Content Creation ============== */}
+      <section className="section-shadow relative px-6 py-28">
+        <div className="ambient-orb absolute -left-20 top-10 h-48 w-48 bg-indigo-600/[0.04]" />
+        <SectionHeading
+          badge="Step 1"
+          title="AI Content Generation"
+          subtitle="The AI engine drafts, reviews, and optimizes content for each target platform in seconds."
+        />
+        <ContentCreationScene />
       </section>
 
-      {/* Feature highlights */}
-      <section className="px-6 pb-24">
-        <div className="mx-auto max-w-5xl">
-          <motion.h2
-            className="mb-12 text-center text-2xl font-bold text-zinc-50 sm:text-3xl"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-          >
-            What You&apos;ll See in the Dashboard
-          </motion.h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {DEMO_FEATURES.map((feature, i) => {
-              const Icon = feature.icon;
-              return (
-                <motion.div
-                  key={feature.title}
-                  className="glass rounded-xl p-6"
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: i * 0.06 }}
-                >
-                  <div className="icon-glow mb-3 flex h-10 w-10 items-center justify-center rounded-lg">
-                    <Icon className="h-5 w-5 text-indigo-400" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-zinc-50">{feature.title}</h3>
-                  <p className="mt-1 text-sm text-zinc-400">{feature.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* ============== SCENE 3: Compliance Check ============== */}
+      <section className="section-shadow relative px-6 py-28">
+        <div className="ambient-orb absolute -right-16 bottom-10 h-56 w-56 bg-purple-600/[0.04]" />
+        <SectionHeading
+          badge="Step 2"
+          title="Compliance Validation"
+          subtitle="Every piece of content passes through 6 automated compliance gates before publishing."
+        />
+        <ComplianceScene />
       </section>
 
-      {/* Try it yourself */}
-      <section className="px-6 pb-24">
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* ============== SCENE 4: Cross-Platform Publishing ============== */}
+      <section className="section-shadow relative px-6 py-28">
+        <div className="ambient-orb absolute -left-12 top-1/2 h-44 w-44 bg-cyan-600/[0.04]" />
+        <SectionHeading
+          badge="Step 3"
+          title="Cross-Platform Publishing"
+          subtitle="Content flows from the AI hub to all connected platforms simultaneously."
+        />
+        <CrossPlatformScene />
+      </section>
+
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* ============== SCENE 5: Dashboard Snapshot ============== */}
+      <section className="relative px-6 py-28">
+        <div className="ambient-orb absolute -right-20 top-20 h-52 w-52 bg-indigo-600/[0.04]" />
+        <SectionHeading
+          badge="Step 4"
+          title="Live Dashboard"
+          subtitle="Monitor campaigns, agent activity, and cross-platform performance in real-time."
+        />
+        <DashboardScene />
+      </section>
+
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* ============== SCENE 6: CTA End Frame ============== */}
+      <section className="relative px-6 py-28">
+        <div className="pointer-events-none absolute inset-0 radial-glow opacity-40" />
         <div className="mx-auto max-w-4xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -131,14 +123,20 @@ export default function DemoPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl font-bold text-zinc-50">Ready to try it yourself?</h2>
+            <h2 className="text-3xl font-extrabold tracking-tight text-zinc-50 sm:text-4xl">
+              Start Building with{" "}
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                OrchestraAI
+              </span>{" "}
+              Today
+            </h2>
             <p className="mx-auto mt-4 max-w-lg text-zinc-400">
               The best way to understand OrchestraAI is to use it. Start a free trial and
               experience the full platform with your own campaigns.
             </p>
             <Link
               href={DASHBOARD_URL}
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-3.5 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 hover:shadow-indigo-600/30"
+              className="btn-primary group mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-3.5 text-sm font-medium text-white shadow-lg shadow-indigo-600/20"
             >
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -147,7 +145,7 @@ export default function DemoPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Footer CTA */}
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <CTABanner
