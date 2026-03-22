@@ -1,6 +1,6 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-22
+**Updated:** 2026-03-01 (latest session)
 **Branch:** `master` (up to date with `origin/master`)
 **Test Suite:** 355 tests, all passing (14 test modules)
 **Commits:** 32 total
@@ -11,7 +11,9 @@
 
 OrchestraAI is a **fully production-ready, revenue-collecting SaaS platform**. All engineering work is complete. The platform has been tested end-to-end including a real $99 Stripe payment (refunded).
 
-Since the previous state-of-the-union (2026-03-21), the following milestones were completed on 2026-03-22:
+Since the previous state-of-the-union, the following milestones were completed:
+
+### Infrastructure & Services (completed 2026-03-22)
 
 1. **Stripe live mode activated** -- Real payments working. Starter ($99/mo) and Agency ($999/mo) with live webhook at `api.useorchestra.dev`. First real transaction processed and refunded.
 2. **SMTP email alerts via Resend** -- Domain `useorchestra.dev` verified (DKIM + SPF), budget alerts now send real emails.
@@ -20,14 +22,48 @@ Since the previous state-of-the-union (2026-03-21), the following milestones wer
 5. **Google Search Console** -- Ownership verified via HTML file, sitemap submitted, 7 pages indexing.
 6. **Subscription prompt on dashboard** -- Free users see a prominent "Choose a Plan" banner.
 7. **Sentry error monitoring** -- Integrated in both FastAPI backend and Next.js dashboard, two projects configured.
-8. **5 technical debt items resolved:**
-   - Auth fallback: non-existent users now get 401 (was incorrectly returning 503)
-   - Encryption: AES-256-GCM added as preferred method with Fernet backward compatibility
-   - Scheduler: APScheduler now starts/stops in FastAPI lifespan (daily/monthly resets, hourly velocity)
-   - Bidding engine: verified as correct (STATE_OF_THE_UNION was wrong about unreachable branches)
-   - GDPR export: queries all 10 PostgreSQL tables, downloadable JSON archive endpoint added
+8. **5 technical debt items resolved** (auth fallback, AES-256-GCM encryption, APScheduler, bidding verification, GDPR export).
 9. **Vercel Analytics + Speed Insights** -- Enabled on both dashboard and marketing website.
 10. **Redis connected** -- Railway Redis service linked to backend.
+
+### Marketing Website Redesign (7 rounds, completed 2026-03-01)
+
+The marketing website underwent 7 iterative redesign passes based on detailed design feedback (documented in `docs/website_redesign1.md` through `docs/website_redesign7.md`), pushing it from ~6/10 to top-tier SaaS quality. Key changes:
+
+**Visual Identity & Brand System:**
+- Dark + AI-native + glow aesthetic with primary `#0B0B0F` and surface `#111117` backgrounds
+- Animated gradient mesh (`hero-mesh`) for hero depth
+- Ambient floating orbs, noise texture overlay, radial glow system
+- Animated neon sweep accent line (`.neon-line`) as signature visual element
+- Glassmorphism card system (`.card-elevated`) with neon edge glow on hover
+- Gradient CTA buttons (`.btn-primary`, `.btn-secondary`) with intensified hover glow
+- Soft shadow dividers between sections for layered depth
+
+**Hero Section:**
+- Headline: "One AI Command. Nine Platforms. Zero Wasted Spend." with `font-extrabold`, `tracking-tighter`, `leading-[1.05]`
+- Secondary emotional hook: "Stop managing campaigns. Start orchestrating."
+- Animated pipeline visualization (`HeroPipeline` component) -- 10 color-coded agent nodes with traveling data pulse
+- BrowserMockup with animated bar charts, live agent pipeline sidebar, throughput indicator, hover zoom
+- Social proof micro-bar (no credit card, 60s deploy, Apache 2.0)
+- Product Showcase Panels (AI Agent Pipeline, Financial Guardrails, Cross-Platform ROI) with live animations
+
+**New Sections Added:**
+- Trust Metrics Bar with "Built by engineers" credibility line
+- "A New Category" positioning section with 4 pillars (AI-Native, Zero Infra, Self-Improving, Dev-First)
+- Developer Section with syntax-highlighted code snippet and technical feature checklist
+- **Interactive Pipeline Demo** -- Full interactive 2D DAG visualization:
+  - `PipelineCanvas`: 8 clickable nodes with status-based glow (idle/running/success/failed), SVG edges with animated data pulse dots, sequential pipeline run simulation on load
+  - `InspectorPanel`: Slide-in panel with streaming log viewer (character-by-character typing), status badges, duration, node details
+  - `OrbitalAccent`: CSS/Framer Motion orbital animation (4 glowing dots around central "AI" node) as lightweight 3D accent
+  - Status legend and interaction hints
+
+**Polish & Performance:**
+- All section spacing increased to `py-28 sm:py-32` for breathing room
+- Text density reduced ~30% across all card descriptions
+- Section entrance stagger timing refined
+- Feature descriptions shortened for lighter feel
+- All components lazy-loaded with `next/dynamic` and `ssr: false` where appropriate
+- Zero new npm dependencies added for the entire redesign
 
 ---
 
@@ -70,13 +106,17 @@ Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
 
 | Page | Route | Content |
 |------|-------|---------|
-| Landing | `/` | Hero, platform marquee, how-it-works, feature highlights, architecture diagram, animated stats, comparison table, testimonials, CTA |
+| Landing | `/` | Hero (animated pipeline + BrowserMockup + product showcase panels), trust metrics bar, interactive pipeline demo, problem/solution, category positioning, platform logos, how-it-works, feature highlights, architecture diagram, animated stats, comparison table, developer section, testimonials, CTA |
 | Features | `/features` | 8 detailed feature sections, code snippet previews, tech stack grid |
 | Pricing | `/pricing` | Starter/Agency cards, self-host option, ROI calculator, feature comparison matrix |
 | Security | `/security` | 7 security sections with trust badges (SOC 2, GDPR, Apache 2.0) |
 | FAQ | `/faq` | Searchable accordion with category filter tabs, 7 categories, 14 questions |
 | Contact | `/contact` | Support channels (Email, Dashboard Chat, GitHub Issues), contact form |
 | Demo | `/demo` | Embedded video player, key feature screenshots, "Try it yourself" CTA |
+
+**Website Components (24):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, InspectorPanel, OrbitalAccent, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, plus page-level components.
+
+**Visual System:** Dark + glow brand identity, animated gradient mesh, ambient orbs, noise overlay, neon sweep accents, glassmorphism cards, gradient CTA buttons, soft shadow dividers, section fade transitions.
 
 **SEO:** Auto-generated `sitemap.xml` (7 URLs), `robots.txt`, Open Graph + Twitter meta tags on every page, branded OG image (1200x630).
 
@@ -149,9 +189,9 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | `frontend.yml` | Changes to `frontend/**` | TypeScript check, ESLint, Next.js build |
 | `website.yml` | Changes to `website/**` | TypeScript check, ESLint, Next.js build |
 
-### 2.9 Documentation (17 documents)
+### 2.9 Documentation (24 documents)
 
-architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md.
+architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, website_redesign1.md through website_redesign7.md (7 iterative design feedback docs).
 
 ### 2.10 Marketing Assets
 
@@ -232,22 +272,21 @@ faba8be  feat: redesign promotional website with premium dark aesthetic, new com
 
 ### Marketing & Growth (no engineering blockers)
 
-1. **Upload marketing videos** to platforms:
+1. **Deploy updated marketing website** -- The 7 rounds of redesign work need to be pushed to production on Vercel.
+2. **Upload marketing videos** to platforms:
    - Product Hunt (16:9 + thumbnail)
    - Twitter/X launch thread (9:16)
    - LinkedIn post (16:9)
    - Instagram Reels (9:16)
-
-2. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
-
-3. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
+3. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
+4. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
 
 ### Future Engineering (when needed)
 
-4. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
-5. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
-6. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
-7. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
+5. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
+6. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
+7. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
+8. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
 
 ---
 
@@ -281,7 +320,7 @@ faba8be  feat: redesign promotional website with premium dark aesthetic, new com
 | Frontend build (next build) | Success |
 | Website TypeScript (tsc --noEmit) | Zero errors |
 | Website ESLint | Zero errors |
-| Website build (next build) | Success (7 static pages + sitemap.xml) |
+| Website build (next build) | Success (11 static pages including sitemap.xml) |
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Git working tree | Clean |
 

@@ -77,7 +77,7 @@ export default function Navbar() {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-zinc-400 md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800 md:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -99,7 +99,7 @@ export default function Navbar() {
                   key={href}
                   href={href}
                   onClick={closeMobile}
-                  className={`rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                  className={`flex min-h-[44px] items-center rounded-lg px-4 text-sm transition-colors ${
                     pathname === href
                       ? "bg-indigo-600/10 font-medium text-indigo-400"
                       : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-50"
@@ -111,7 +111,7 @@ export default function Navbar() {
               <Link
                 href={DASHBOARD_URL}
                 onClick={closeMobile}
-                className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white"
+                className="mt-3 inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-indigo-600 px-5 text-sm font-medium text-white"
               >
                 Get Started
                 <ArrowRight className="h-3.5 w-3.5" />

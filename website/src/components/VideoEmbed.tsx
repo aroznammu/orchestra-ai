@@ -53,7 +53,7 @@ export default function VideoEmbed({
           >
             {poster && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={poster} alt="Video thumbnail" className="absolute inset-0 h-full w-full object-cover opacity-60" />
+              <img src={poster} alt="Video thumbnail" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-60" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent" />
             <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-600/90 shadow-2xl shadow-indigo-600/30 transition-transform group-hover:scale-110">

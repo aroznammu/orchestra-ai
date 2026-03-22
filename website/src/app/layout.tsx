@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 font-sans text-zinc-50 antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} noise-overlay min-h-screen bg-background font-sans text-zinc-50 antialiased`}
       >
         <Navbar />
         <main className="pt-16">{children}</main>

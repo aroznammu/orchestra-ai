@@ -18,14 +18,14 @@ export default function FeatureCard({
 }: FeatureCardProps) {
   return (
     <motion.div
-      className="glass group rounded-xl p-6 transition-all"
+      className="card-elevated group rounded-2xl p-6"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.4, delay: index * 0.08 }}
     >
       <div className="icon-glow mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
-        <Icon className="h-5 w-5 text-indigo-400" />
+        <Icon className="h-5 w-5 text-indigo-400 transition-transform group-hover:scale-110" />
       </div>
       <h3 className="mb-2 text-lg font-semibold text-zinc-50">{title}</h3>
       <p className="text-sm leading-relaxed text-zinc-400">{description}</p>

@@ -28,11 +28,11 @@ export default function SectionHeading({
           {badge}
         </span>
       )}
-      <h2 className="text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">
+      <h2 className="text-[2rem] font-extrabold leading-[1.2] tracking-tight text-white sm:text-[2.25rem] lg:text-[2.5rem]">
         {title}
       </h2>
       {subtitle && (
-        <p className={`mt-4 text-lg text-zinc-400 ${centered ? "mx-auto max-w-2xl" : ""}`}>
+        <p className={`mt-4 text-lg leading-relaxed text-zinc-400 ${centered ? "mx-auto max-w-2xl" : ""}`}>
           {subtitle}
         </p>
       )}

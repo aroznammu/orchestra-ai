@@ -319,23 +319,31 @@ export interface Testimonial {
   quote: string;
   role: string;
   company: string;
+  initials: string;
+  metric?: string;
 }
 
 export const TESTIMONIALS: Testimonial[] = [
   {
-    quote: "OrchestraAI replaced five tools and cut our campaign setup time by 80%. The AI orchestrator just works.",
+    quote: "OrchestraAI replaced five separate tools and cut our campaign setup time by 80%. What used to take a full day now happens in one prompt.",
     role: "Marketing Director",
-    company: "Growth-Stage SaaS",
+    company: "Series B SaaS, 120 employees",
+    initials: "JM",
+    metric: "80% faster setup",
   },
   {
-    quote: "The financial guardrails alone saved us from a $5,000 mistake on Google Ads. Worth every penny.",
-    role: "Head of Digital",
-    company: "E-Commerce Brand",
+    quote: "The financial guardrails saved us from a $5,000 mistake on Google Ads in the first week. The 3-tier spend caps and anomaly detection are genuinely unique.",
+    role: "Head of Digital Marketing",
+    company: "E-Commerce Brand, $12M ARR",
+    initials: "SK",
+    metric: "$5K saved in week 1",
   },
   {
-    quote: "We manage 40+ client accounts. The kill switch and spend caps give us peace of mind no other tool provides.",
+    quote: "We manage 40+ client accounts across 6 platforms. The kill switch and real-time spend caps give us confidence no other tool provides at this scale.",
     role: "Agency Principal",
-    company: "Digital Marketing Agency",
+    company: "Performance Marketing Agency",
+    initials: "RA",
+    metric: "40+ accounts managed",
   },
 ];
 

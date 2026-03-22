@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
+  --background: #0B0B0F;
+  --surface: #111117;
   --foreground: #fafafa;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -91,12 +93,188 @@ html {
 
 /* Radial glow */
 .radial-glow {
-  background: radial-gradient(circle at 50% 30%, rgba(99, 102, 241, 0.08), transparent 60%);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 20%, rgba(99, 102, 241, 0.12), transparent 50%),
+    radial-gradient(ellipse 40% 40% at 80% 60%, rgba(168, 85, 247, 0.06), transparent 50%),
+    radial-gradient(ellipse 40% 30% at 20% 70%, rgba(6, 182, 212, 0.04), transparent 50%);
 }
 
 /* Fade to black bottom */
 .fade-bottom {
   background: linear-gradient(to bottom, transparent 60%, var(--background));
+}
+
+/* Ambient floating orbs for depth */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Subtle noise texture overlay for premium feel */
+.noise-overlay::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: overlay;
+}
+
+/* Section glow divider */
+.section-glow-divider {
+  position: relative;
+}
+
+.section-glow-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.2), transparent);
+}
+
+/* Gradient mesh for hero premium feel */
+@keyframes mesh-shift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2%, -1%) rotate(0.5deg); }
+  50% { transform: translate(-1%, 2%) rotate(-0.5deg); }
+  75% { transform: translate(-2%, -1%) rotate(0.3deg); }
+}
+
+.hero-mesh {
+  background:
+    radial-gradient(ellipse 50% 50% at 30% 30%, rgba(99, 102, 241, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 70% 60%, rgba(168, 85, 247, 0.08), transparent),
+    radial-gradient(ellipse 40% 50% at 50% 80%, rgba(6, 182, 212, 0.06), transparent);
+  animation: mesh-shift 20s ease-in-out infinite;
+}
+
+/* Elevated card style with gradient top-border */
+.card-elevated {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-elevated:hover {
+  border-color: rgba(99, 102, 241, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px -8px rgba(99, 102, 241, 0.1);
+}
+
+.card-elevated::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.4), transparent);
+  border-radius: 0 0 50% 50%;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card-elevated:hover::before {
+  opacity: 1;
+}
+
+/* Neon edge glow on hover */
+.card-elevated:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.1),
+    0 8px 32px -8px rgba(99, 102, 241, 0.15),
+    inset 0 1px 0 rgba(99, 102, 241, 0.1);
+}
+
+/* Animated neon accent line (signature element) */
+@keyframes neon-sweep {
+  0% { left: -30%; }
+  100% { left: 130%; }
+}
+
+.neon-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.neon-line::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -30%;
+  width: 30%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.8), rgba(168, 85, 247, 0.6), transparent);
+  animation: neon-sweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Primary gradient CTA button */
+.btn-primary {
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  box-shadow: 0 4px 24px -4px rgba(99, 102, 241, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  transform: scale(1.04);
+  box-shadow:
+    0 8px 32px -4px rgba(99, 102, 241, 0.5),
+    0 0 20px -2px rgba(124, 58, 237, 0.3);
+  filter: brightness(1.12);
+}
+
+/* Secondary outline button */
+.btn-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  transform: scale(1.03);
+  box-shadow: 0 0 16px -4px rgba(255, 255, 255, 0.08);
+}
+
+/* Soft shadow divider between sections */
+.section-shadow {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03), 0 1px 40px -20px rgba(99, 102, 241, 0.06);
+}
+
+/* Section fade transition (eliminates hard breaks) */
+.section-fade {
+  position: relative;
+}
+
+.section-fade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    var(--background) 0%,
+    transparent 8%,
+    transparent 92%,
+    var(--background) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Scrollbar */
@@ -115,6 +293,13 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(113, 113, 122, 0.5);
+}
+
+/* Pipeline canvas base */
+.pipeline-canvas {
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(99, 102, 241, 0.04), transparent),
+    var(--surface);
 }
 
 /* Platform marquee */
