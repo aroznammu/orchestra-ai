@@ -29,7 +29,10 @@ import {
   HOW_IT_WORKS,
   TESTIMONIALS,
   DASHBOARD_URL,
+  GUARDED_TRIAL_MICROCOPY,
 } from "@/lib/constants";
+import EnterpriseTrustStrip from "@/components/EnterpriseTrustStrip";
+import HowItWorksVideoEmbed from "@/components/HowItWorksVideoEmbed";
 
 const AnimatedCounter = dynamic(() => import("@/components/AnimatedCounter"), { ssr: false });
 const CTABanner = dynamic(() => import("@/components/CTABanner"));
@@ -90,10 +93,13 @@ function InlineCTA({
   text = "Start Free Trial",
   href = DASHBOARD_URL,
   secondary,
+  showTrialMicrocopy = false,
 }: {
   text?: string;
   href?: string;
   secondary?: string;
+  /** Guardrailed trial line under the button (trial CTAs only) */
+  showTrialMicrocopy?: boolean;
 }) {
   return (
     <motion.div
@@ -113,6 +119,9 @@ function InlineCTA({
         {text}
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </Link>
+      {showTrialMicrocopy && (
+        <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-500">{GUARDED_TRIAL_MICROCOPY}</p>
+      )}
     </motion.div>
   );
 }
@@ -188,7 +197,7 @@ export default function HomePage() {
               href={DASHBOARD_URL}
               className="btn-primary group inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-semibold text-white"
             >
-              Start Building
+              Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
@@ -199,6 +208,14 @@ export default function HomePage() {
               View Demo
             </Link>
           </motion.div>
+          <motion.p
+            className="mx-auto mt-4 max-w-xl text-sm text-zinc-500"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.38 }}
+          >
+            {GUARDED_TRIAL_MICROCOPY}
+          </motion.p>
 
           {/* Social proof micro-bar */}
           <motion.div
@@ -228,6 +245,8 @@ export default function HomePage() {
           <BrowserMockup />
         </div>
       </section>
+
+      <EnterpriseTrustStrip />
 
       {/* ============== PRODUCT SHOWCASE PANELS ============== */}
       <section className="px-6 pb-8 pt-16">
@@ -429,6 +448,7 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
+          <HowItWorksVideoEmbed />
         </div>
       </section>
 
@@ -462,6 +482,7 @@ export default function HomePage() {
       <InlineCTA
         text="Start Free Trial"
         secondary="No credit card required. Deploy in under 60 seconds."
+        showTrialMicrocopy
       />
 
       {/* ============== ARCHITECTURE ============== */}
@@ -664,13 +685,32 @@ export default function HomePage() {
                 <p className="text-sm leading-relaxed text-zinc-300">
                   &ldquo;{t.quote}&rdquo;
                 </p>
-                <div className="mt-4 flex items-center gap-3 border-t border-zinc-800/60 pt-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-xs font-bold text-white">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-zinc-50">{t.role}</p>
-                    <p className="text-xs text-zinc-500">{t.company}</p>
+                <div className="mt-4 border-t border-zinc-800/60 pt-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-xs font-bold text-white"
+                      aria-hidden
+                    >
+                      {t.name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-zinc-50">{t.name}</p>
+                      <p className="text-xs text-zinc-500">{t.role}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-zinc-700/60 bg-zinc-900 text-[10px] font-bold text-zinc-500"
+                          aria-hidden
+                        >
+                          {t.companyLogo}
+                        </span>
+                        <span className="text-xs font-medium text-zinc-400">{t.company}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>

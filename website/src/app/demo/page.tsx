@@ -9,7 +9,8 @@ import ContentCreationScene from "@/components/demo/scenes/ContentCreationScene"
 import ComplianceScene from "@/components/demo/scenes/ComplianceScene";
 import CrossPlatformScene from "@/components/demo/scenes/CrossPlatformScene";
 import DashboardScene from "@/components/demo/scenes/DashboardScene";
-import { DASHBOARD_URL } from "@/lib/constants";
+import DemoWatchVideoSection from "@/components/demo/DemoWatchVideoSection";
+import { DASHBOARD_URL, GUARDED_TRIAL_MICROCOPY } from "@/lib/constants";
 
 export default function DemoPage() {
   return (
@@ -44,8 +45,9 @@ export default function DemoPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            Watch how a single natural language command orchestrates content creation,
-            compliance checks, and cross-platform publishing.
+            Watch how a single natural language command orchestrates copy,{" "}
+            <span className="text-violet-300/90">Seedance 2.0 video</span>, compliance checks, and
+            cross-platform publishing.
           </motion.p>
           <motion.p
             className="mx-auto mt-3 max-w-md text-sm text-zinc-600"
@@ -67,7 +69,7 @@ export default function DemoPage() {
         <SectionHeading
           badge="Step 1"
           title="AI Content Generation"
-          subtitle="The AI engine drafts, reviews, and optimizes content for each target platform in seconds."
+          subtitle="Draft, review, and optimize copy — then render a 10s Seedance 2.0 video for vertical placements."
         />
         <ContentCreationScene />
       </section>
@@ -113,6 +115,8 @@ export default function DemoPage() {
 
       <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
 
+      <DemoWatchVideoSection />
+
       {/* ============== SCENE 6: CTA End Frame ============== */}
       <section className="relative px-6 py-28">
         <div className="pointer-events-none absolute inset-0 radial-glow opacity-40" />
@@ -141,6 +145,7 @@ export default function DemoPage() {
               Start Free Trial
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
+            <p className="mx-auto mt-3 max-w-md text-sm text-zinc-500">{GUARDED_TRIAL_MICROCOPY}</p>
           </motion.div>
         </div>
       </section>

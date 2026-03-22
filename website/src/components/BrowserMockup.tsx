@@ -12,7 +12,12 @@ const AGENTS = [
   { name: "Publish", latency: "45ms" },
 ];
 
-export default function BrowserMockup() {
+export interface BrowserMockupProps {
+  /** Financial safety affordances for the interactive /demo walkthrough */
+  demoFinancialControls?: boolean;
+}
+
+export default function BrowserMockup({ demoFinancialControls = false }: BrowserMockupProps) {
   return (
     <motion.div
       className="relative mx-auto mt-16 max-w-5xl"
@@ -60,20 +65,45 @@ export default function BrowserMockup() {
             </div>
           </div>
 
+          {demoFinancialControls && (
+            <motion.div
+              className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.4 }}
+            >
+              <button
+                type="button"
+                className="w-full rounded-lg border border-red-600/50 bg-red-950/50 px-4 py-2.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-200 shadow-lg shadow-red-950/40 transition hover:bg-red-900/50 sm:w-auto sm:text-[11px]"
+              >
+                EMERGENCY KILL SWITCH: HALT ALL SPEND
+              </button>
+              <span className="text-center text-[10px] text-zinc-500 sm:text-right">
+                One tap pauses every connected account
+              </span>
+            </motion.div>
+          )}
+
           {/* Metric cards */}
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Active Campaigns", value: "12", delta: "+3", color: "text-indigo-400", deltaColor: "text-emerald-400" },
-              { label: "Total Impressions", value: "2.4M", delta: "+18%", color: "text-emerald-400", deltaColor: "text-emerald-400" },
-              { label: "Monthly Spend", value: "$8,240", delta: "62% cap", color: "text-amber-400", deltaColor: "text-amber-400" },
-              { label: "Avg. ROI", value: "340%", delta: "+24%", color: "text-purple-400", deltaColor: "text-emerald-400" },
+              { label: "Active Campaigns", value: "12", delta: "+3", color: "text-indigo-400", deltaColor: "text-emerald-400", key: "campaigns" },
+              { label: "Total Impressions", value: "2.4M", delta: "+18%", color: "text-emerald-400", deltaColor: "text-emerald-400", key: "impr" },
+              { label: "Monthly Spend", value: "$8,240", delta: "62% cap", color: "text-amber-400", deltaColor: "text-amber-400", key: "spend" },
+              { label: "Avg. ROI", value: "340%", delta: "+24%", color: "text-purple-400", deltaColor: "text-emerald-400", key: "roi" },
             ].map((m) => (
-              <div key={m.label} className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 p-3">
+              <div key={m.key} className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 p-3">
                 <div className="flex items-baseline justify-between">
                   <span className={`text-lg font-bold ${m.color}`}>{m.value}</span>
                   <span className={`text-[9px] font-medium ${m.deltaColor}`}>{m.delta}</span>
                 </div>
                 <div className="mt-1 text-[10px] text-zinc-500">{m.label}</div>
+                {demoFinancialControls && m.key === "roi" && (
+                  <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-amber-500/25 bg-amber-950/35 px-2 py-1 text-[8px] font-semibold leading-tight text-amber-100/95">
+                    <span aria-hidden>⚡</span>
+                    Autonomous Budget Reallocation Active
+                  </div>
+                )}
               </div>
             ))}
           </div>

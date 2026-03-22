@@ -317,35 +317,47 @@ export const ARCHITECTURE_NODES: ArchNode[] = [
 
 export interface Testimonial {
   quote: string;
+  name: string;
   role: string;
   company: string;
-  initials: string;
+  /** Two-letter or short mark for a greyscale logo tile */
+  companyLogo: string;
   metric?: string;
 }
 
 export const TESTIMONIALS: Testimonial[] = [
   {
-    quote: "OrchestraAI replaced five separate tools and cut our campaign setup time by 80%. What used to take a full day now happens in one prompt.",
-    role: "Marketing Director",
-    company: "Series B SaaS, 120 employees",
-    initials: "JM",
-    metric: "80% faster setup",
+    quote:
+      "OrchestraAI's LangGraph engine replaced 5 tools and dropped our Meta CPA by 34% in week one. We finally have one brain across paid social.",
+    name: "Sarah Jenkins",
+    role: "VP Growth",
+    company: "Acme Digital",
+    companyLogo: "AD",
+    metric: "−34% Meta CPA (week 1)",
   },
   {
-    quote: "The financial guardrails saved us from a $5,000 mistake on Google Ads in the first week. The 3-tier spend caps and anomaly detection are genuinely unique.",
-    role: "Head of Digital Marketing",
-    company: "E-Commerce Brand, $12M ARR",
-    initials: "SK",
-    metric: "$5K saved in week 1",
+    quote:
+      "The 3-tier spend caps caught a mis-set Google rule before it burned past $4,800. The kill switch is on our agency SOP deck now.",
+    name: "Marcus Chen",
+    role: "Head of Performance",
+    company: "Northline Commerce",
+    companyLogo: "NC",
+    metric: "$4.8K avoided",
   },
   {
-    quote: "We manage 40+ client accounts across 6 platforms. The kill switch and real-time spend caps give us confidence no other tool provides at this scale.",
-    role: "Agency Principal",
-    company: "Performance Marketing Agency",
-    initials: "RA",
-    metric: "40+ accounts managed",
+    quote:
+      "Forty-two retainers across six platforms — OrchestraAI is the only stack where compliance, video (Seedance), and spend limits share one audit trail.",
+    name: "Elena Vasquez",
+    role: "Managing Partner",
+    company: "Signal & Tide Agency",
+    companyLogo: "ST",
+    metric: "42 accounts",
   },
 ];
+
+/** Shown under primary trial CTAs site-wide */
+export const GUARDED_TRIAL_MICROCOPY =
+  "14-Day Trial · Includes $50 in AI Video Credits · No Credit Card Required";
 
 /* ------------------------------------------------------------------ */
 /*  Pricing                                                            */

@@ -3,13 +3,15 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { DASHBOARD_URL } from "@/lib/constants";
+import { DASHBOARD_URL, GUARDED_TRIAL_MICROCOPY } from "@/lib/constants";
 
 interface CTABannerProps {
   title?: string;
   subtitle?: string;
   buttonText?: string;
   buttonHref?: string;
+  /** Trial microcopy under the button; defaults to on only for dashboard signup links */
+  showTrialFootnote?: boolean;
 }
 
 export default function CTABanner({
@@ -17,7 +19,9 @@ export default function CTABanner({
   subtitle = "Self-host in 60 seconds with Docker, or start a free trial of Enterprise Cloud.",
   buttonText = "Get Started Free",
   buttonHref = DASHBOARD_URL,
+  showTrialFootnote,
 }: CTABannerProps) {
+  const trialFootnoteVisible = showTrialFootnote ?? buttonHref === DASHBOARD_URL;
   return (
     <motion.section
       className="relative overflow-hidden rounded-2xl border border-indigo-800/30 bg-gradient-to-br from-indigo-950/80 via-zinc-900 to-purple-950/60 px-6 py-16 text-center sm:px-12"
@@ -38,6 +42,9 @@ export default function CTABanner({
           {buttonText}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
+        {trialFootnoteVisible && (
+          <p className="mx-auto mt-3 max-w-lg text-sm text-zinc-500">{GUARDED_TRIAL_MICROCOPY}</p>
+        )}
       </div>
     </motion.section>
   );

@@ -25,7 +25,7 @@ export default function DashboardScene() {
   return (
     <div ref={containerRef} className="mx-auto max-w-5xl">
       <motion.div style={{ scale, y }} className="relative">
-        <BrowserMockup />
+        <BrowserMockup demoFinancialControls />
 
         {/* Annotation callouts */}
         {CALLOUTS.map((callout) => (
