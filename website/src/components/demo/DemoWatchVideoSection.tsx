@@ -4,9 +4,7 @@ import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { useState } from "react";
 
-/** Stand-in clip until you drop in a Loom iframe `src` below */
-const PLACEHOLDER_MP4 =
-  "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+const DEMO_VIDEO = "/orchestraai_demo.mp4";
 
 export default function DemoWatchVideoSection() {
   const [active, setActive] = useState(false);
@@ -32,8 +30,8 @@ export default function DemoWatchVideoSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.05 }}
         >
-          Placeholder video plays here; replace with your Loom embed in{" "}
-          <code className="rounded bg-zinc-800/80 px-1 py-0.5 text-[11px] text-zinc-400">DemoWatchVideoSection.tsx</code>.
+          Watch a full walkthrough of the OrchestraAI pipeline — from natural
+          language command to live campaign in under 90 seconds.
         </motion.p>
 
         <motion.div
@@ -59,7 +57,7 @@ export default function DemoWatchVideoSection() {
               ) : (
                 <video
                   className="h-full w-full object-cover"
-                  src={PLACEHOLDER_MP4}
+                  src={DEMO_VIDEO}
                   controls
                   playsInline
                   autoPlay
