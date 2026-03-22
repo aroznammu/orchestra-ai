@@ -11,6 +11,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  transpilePackages: ["three"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

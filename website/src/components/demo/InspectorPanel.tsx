@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import type { PipelineNodeData } from "./PipelineCanvas";
+import type { PipelineNodeData } from "./pipelineData";
 
 const STATUS_BADGE = {
   idle: { label: "Idle", className: "bg-zinc-800 text-zinc-400" },
