@@ -17,10 +17,10 @@ const NODES = [
 
 export default function HeroPipeline() {
   return (
-    <div className="relative mx-auto mt-12 max-w-3xl">
+    <div className="relative mx-auto mt-12 max-w-4xl">
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-600/5 via-purple-600/5 to-cyan-600/5 blur-xl" />
 
-      <div className="relative flex items-center justify-between gap-0.5 overflow-hidden rounded-2xl border border-zinc-800/40 bg-zinc-950/60 px-4 py-4 backdrop-blur-sm sm:gap-1 sm:px-6">
+      <div className="relative flex items-center justify-between gap-1 overflow-hidden rounded-2xl border border-zinc-800/40 bg-zinc-950/60 px-4 py-5 backdrop-blur-sm sm:gap-1.5 sm:px-6">
         {/* Traveling pulse */}
         <motion.div
           className="pointer-events-none absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"
@@ -37,18 +37,18 @@ export default function HeroPipeline() {
               transition={{ duration: 0.4, delay: 0.6 + i * 0.07 }}
             >
               <motion.div
-                className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${node.color} shadow-lg sm:h-9 sm:w-9`}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${node.color} shadow-lg sm:h-11 sm:w-11`}
                 whileHover={{ scale: 1.2, y: -2 }}
                 transition={{ type: "spring", stiffness: 400, damping: 15 }}
                 style={{
                   boxShadow: `0 0 12px -2px var(--tw-gradient-from)`,
                 }}
               >
-                <span className="text-[8px] font-bold text-white sm:text-[9px]">
+                <span className="text-xs font-bold text-white sm:text-sm">
                   {i + 1}
                 </span>
               </motion.div>
-              <span className="mt-1.5 text-[7px] font-medium text-zinc-500 sm:text-[8px]">
+              <span className="mt-1.5 text-[10px] font-medium text-zinc-400 sm:text-xs">
                 {node.label}
               </span>
             </motion.div>
