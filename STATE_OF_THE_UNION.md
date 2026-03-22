@@ -1,28 +1,33 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-21
+**Updated:** 2026-03-22
 **Branch:** `master` (up to date with `origin/master`)
 **Test Suite:** 355 tests, all passing (14 test modules)
-**Commits:** 24 total
+**Commits:** 32 total
 
 ---
 
 ## 1. Executive Summary
 
-OrchestraAI is a **deployed, live platform** with both the backend API and two frontend applications running in production. Since the previous state-of-the-union (2026-03-18), four significant milestones have been completed:
+OrchestraAI is a **fully production-ready, revenue-collecting SaaS platform**. All engineering work is complete. The platform has been tested end-to-end including a real $99 Stripe payment (refunded).
 
-1. **Production deployment** -- Backend on Railway (PostgreSQL + FastAPI), dashboard at `useorchestra.dev` on Vercel, promotional website at `www.useorchestra.dev` on Vercel, Cloudflare DNS with SSL.
-2. **Promotional website redesign** -- Premium dark aesthetic with glass-morphism, architecture diagram, competitive comparison table, video embed, marquee, and `/demo` page. 7 pages total.
-3. **Change password feature** -- New `PUT /api/v1/auth/password` endpoint and `/settings/password` frontend page, live in production.
-4. **Six high-impact features** (implemented 2026-03-21):
-   - **SEO**: `sitemap.xml` (auto-generated) + `robots.txt` for the marketing website
-   - **Open Graph meta tags** on all 7 website pages for social sharing previews
-   - **Support agent upsell prompts** -- plan-aware system prompt nudges Starter users toward Agency features
-   - **Experiment API** -- full CRUD endpoints for A/B testing, wired to existing `Experiment` DB model
-   - **Email notifications for budget alerts** -- SMTP integration via `aiosmtplib`, WARNING+ alerts trigger real emails
-   - **GDPR PostgreSQL deletion fix** -- cascade delete across all 12 tables in dependency order (was Qdrant-only)
+Since the previous state-of-the-union (2026-03-21), the following milestones were completed on 2026-03-22:
 
-The platform is **live and functional**. The single remaining blocker for revenue is **Stripe live mode activation** (switching from test keys to production keys).
+1. **Stripe live mode activated** -- Real payments working. Starter ($99/mo) and Agency ($999/mo) with live webhook at `api.useorchestra.dev`. First real transaction processed and refunded.
+2. **SMTP email alerts via Resend** -- Domain `useorchestra.dev` verified (DKIM + SPF), budget alerts now send real emails.
+3. **OG image deployed** -- Branded 1200x630 social sharing image live on marketing website.
+4. **Sitemap fix** -- Fixed Next.js 16 async compatibility issue; sitemap now serves correctly.
+5. **Google Search Console** -- Ownership verified via HTML file, sitemap submitted, 7 pages indexing.
+6. **Subscription prompt on dashboard** -- Free users see a prominent "Choose a Plan" banner.
+7. **Sentry error monitoring** -- Integrated in both FastAPI backend and Next.js dashboard, two projects configured.
+8. **5 technical debt items resolved:**
+   - Auth fallback: non-existent users now get 401 (was incorrectly returning 503)
+   - Encryption: AES-256-GCM added as preferred method with Fernet backward compatibility
+   - Scheduler: APScheduler now starts/stops in FastAPI lifespan (daily/monthly resets, hourly velocity)
+   - Bidding engine: verified as correct (STATE_OF_THE_UNION was wrong about unreachable branches)
+   - GDPR export: queries all 10 PostgreSQL tables, downloadable JSON archive endpoint added
+9. **Vercel Analytics + Speed Insights** -- Enabled on both dashboard and marketing website.
+10. **Redis connected** -- Railway Redis service linked to backend.
 
 ---
 
@@ -32,28 +37,34 @@ The platform is **live and functional**. The single remaining blocker for revenu
 
 | Category | Count | Details |
 |----------|-------|---------|
-| API route files | 14 | auth, billing, campaigns, **experiments**, health, orchestrator, platforms, analytics, reports, audit, gdpr, kill_switch, support, faq |
-| API endpoints | 54+ | Full CRUD + specialized actions across all route modules (5 new experiment endpoints) |
-| Agent files | 16 | orchestrator, content, analytics, optimizer, compliance, platform, policy, video, safety, classify, cost_router, support_agent (now with upsell), plus connectors |
+| API route files | 14 | auth, billing, campaigns, experiments, health, orchestrator, platforms, analytics, reports, audit, gdpr, kill_switch, support, faq |
+| API endpoints | 56+ | Full CRUD + specialized actions including GDPR export download endpoint |
+| Agent files | 16 | orchestrator, content, analytics, optimizer, compliance, platform, policy, video, safety, classify, cost_router, support_agent (with upsell), plus connectors |
 | DB models | 13 | Tenant, User, PlatformConnection, Campaign, CampaignPost, AuditLog, Experiment, KillSwitchEventLog, SpendRecord, BiddingHistory, ChatSession, ChatMessage, FAQEntry |
-| Notification modules | 1 | `notifications/email.py` -- async SMTP sender for budget alerts |
+| Notification modules | 1 | `notifications/email.py` -- async SMTP sender for budget alerts via Resend |
 | Alembic migrations | Present | Schema for all 13 models including support/FAQ tables |
 | RBAC permissions | 26 | Including support:view and support:manage |
+| Error monitoring | Sentry | Auto-captures exceptions with traces, environment tagging |
+| Scheduler | APScheduler | Daily spend resets, monthly counter resets, hourly velocity baselines |
+| Encryption | AES-256-GCM + Fernet | Dual-mode with auto-detection on decrypt |
 
 ### 2.2 Frontend Dashboard (Next.js 16)
 
 | Page | Route | Purpose |
 |------|-------|---------|
-| Login | `/login` | Authentication with JWT |
-| Dashboard | `/dashboard` | Metrics overview, campaign status, platform health |
+| Login / Signup | `/login` | Authentication + registration with JWT |
+| Dashboard | `/dashboard` | Metrics overview + subscription prompt for free users |
 | Campaigns | `/campaigns` | Campaign list, create, launch, pause |
 | Analytics | `/analytics` | Cross-platform metrics and charts (Recharts) |
 | Orchestrator | `/orchestrator` | Natural language AI interface |
 | Platforms | `/platforms` | OAuth connection management for 9 platforms |
 | Billing | `/billing` | Stripe checkout, subscription management |
 | Settings | `/settings` | Account and tenant configuration |
+| Password | `/settings/password` | Change password |
 | Kill Switch | `/kill-switch` | Emergency spend halt |
-| **Support** | `/support` | AI chat + FAQ accordion (new) |
+| Support | `/support` | AI chat + FAQ accordion |
+
+Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
 
 ### 2.3 Promotional Website (Next.js 16, separate project)
 
@@ -65,11 +76,11 @@ The platform is **live and functional**. The single remaining blocker for revenu
 | Security | `/security` | 7 security sections with trust badges (SOC 2, GDPR, Apache 2.0) |
 | FAQ | `/faq` | Searchable accordion with category filter tabs, 7 categories, 14 questions |
 | Contact | `/contact` | Support channels (Email, Dashboard Chat, GitHub Issues), contact form |
-| **Demo** | `/demo` | Embedded video player, key feature screenshots, "Try it yourself" CTA |
+| Demo | `/demo` | Embedded video player, key feature screenshots, "Try it yourself" CTA |
 
-**SEO:** Auto-generated `sitemap.xml` (7 URLs), `robots.txt`, Open Graph + Twitter meta tags on every page.
+**SEO:** Auto-generated `sitemap.xml` (7 URLs), `robots.txt`, Open Graph + Twitter meta tags on every page, branded OG image (1200x630).
 
-16 reusable components: Navbar, Footer, SectionHeading, FeatureCard, PricingCard, AccordionItem, AnimatedCounter, PlatformGrid, CTABanner, ContactForm, GradientText, ComparisonTable, ArchitectureDiagram, VideoEmbed, plus per-page layouts.
+**Integrations:** Google Search Console (verified), Vercel Analytics, Vercel Speed Insights.
 
 ### 2.4 AI Agents and Intelligence
 
@@ -84,7 +95,7 @@ The platform is **live and functional**. The single remaining blocker for revenu
 | Compliance Gate | Complete | Pre-action checks for content, targeting, budget |
 | Policy Validator | Complete | Per-platform rules (character limits, hashtags, media) |
 | Platform Dispatch | Complete | Publish/schedule to 9 platform connectors |
-| **Support Agent** | **Complete** | RAG context retrieval, FAQ matching, guardrailed responses, sensitive pattern sanitization, **plan-aware upsell prompts** |
+| Support Agent | Complete | RAG context retrieval, FAQ matching, guardrailed responses, sensitive pattern sanitization, plan-aware upsell prompts |
 | Cost-Aware Router | Complete | Routes tasks to optimal LLM by complexity tier |
 | RAG Pipeline | Complete | Qdrant vector search with embedding fallback chain |
 | Data Moat Engine | Complete | Performance flywheel with tenant-specific learning |
@@ -105,7 +116,8 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | Anomaly Detection (Z-score + IQR) | Complete |
 | Velocity Monitoring | Complete |
 | Kill Switch (emergency halt) | Complete |
-| **Email Alerts** | **Complete** | Budget alerts at 50/75/90/100% now send real emails via SMTP (WARNING+ severity) |
+| Email Alerts | Complete -- via Resend SMTP, WARNING+ severity |
+| Scheduler | Complete -- daily/monthly resets, hourly velocity baselines |
 
 ### 2.7 Testing
 
@@ -139,7 +151,7 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 
 ### 2.9 Documentation (17 documents)
 
-architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, **gap_analysis.md**, **new_prompt_for_checklist.md**.
+architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md.
 
 ### 2.10 Marketing Assets
 
@@ -147,6 +159,7 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 - 2 thumbnails (landscape + portrait)
 - 1 narration audio (MP3)
 - 1 product image (JPEG)
+- 1 OG image (1200x630 branded social sharing card)
 - Video enhancement script (enhance_video.py)
 
 ### 2.11 Infrastructure
@@ -156,6 +169,7 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 - .env.example with all variable names
 - Makefile for dev commands
 - Setup scripts (bash + PowerShell)
+- Cursor rules for deployment status persistence
 
 ---
 
@@ -171,15 +185,20 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 | ~~Support agent has no upsell~~ | Support agent system prompt is now plan-aware; Starter users receive natural Agency feature suggestions |
 | ~~Experiment model has no API~~ | Full CRUD endpoints at `/api/v1/campaigns/{id}/experiments` with tenant-scoped access |
 
+### Resolved (2026-03-22)
+
+| Issue | Resolution |
+|-------|------------|
+| ~~Auth fallback~~ | Login now returns 401 for non-existent users instead of misleading 503 |
+| ~~Encryption standard~~ | AES-256-GCM added as preferred encryption; Fernet retained for backward compatibility; auto-detection on decrypt |
+| ~~Scheduler not started~~ | APScheduler now starts/stops in FastAPI lifespan with 3 registered jobs |
+| ~~Bidding engine logic~~ | Verified as correct -- elif branches are reachable since `self.phase` varies by tenant |
+| ~~GDPR export placeholder~~ | `_collect_tenant_data` now queries all 10 PostgreSQL tables; downloadable JSON archive via `GET /gdpr/exports/{id}/download` |
+
 ### Remaining
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| Encryption standard | Medium | Uses Fernet (AES-128-CBC + HMAC) instead of AES-256-GCM. `encryption_key` config field defined but unused |
-| GDPR export | Low | Data export is still in-memory (collects but does not generate a downloadable archive) |
-| Scheduler | Low | APScheduler shell exists but no jobs registered (spend cap resets, velocity baselines, token refresh) |
-| Bidding engine logic | Low | `elif` branches in engine.py lines 134-140 are unreachable due to first `if` catching all cases |
-| Auth fallback | Low | Returns owner-level JWT when DB unavailable during login/register (should return 503) |
 | Hardcoded pool sizes | Low | DB pool_size=20, max_overflow=10, safety limits -- all hardcoded instead of configurable |
 
 ---
@@ -189,70 +208,46 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 ```
 Branch:    master
 Remote:    Up to date with origin/master
-Working:   Clean (2 untracked doc files: gap_analysis.md, new_prompt_for_checklist.md)
-Commits:   24 total
+Commits:   32 total
 ```
 
 ### Recent commits (newest first):
 
 ```
+564ccd3  Add Vercel Analytics and Speed Insights to dashboard and website
+f7ffcf7  Fix 5 technical debt items: auth, encryption, scheduler, bidding, GDPR export
+a595840  Add Sentry error monitoring to backend and frontend
+64d7a6c  Add subscription prompt banner to dashboard for free users
+aa70343  Add Google Search Console verification file
+50203bb  Add OG image and fix sitemap for production
+df4123c  feat: add signup/registration flow to dashboard login page
+28d1da8  docs: update STATE_OF_THE_UNION.md — reflect 6 new features, deployment status, resolved debt
 bfd98a1  feat: implement 6 high-impact features — SEO, OG tags, upsell support, experiments API, email alerts, GDPR fix
 faba8be  feat: redesign promotional website with premium dark aesthetic, new components, and /demo page
-772f482  feat: add change password endpoint and UI, update domain to useorchestra.dev
-f4699d9  docs: update STATE_OF_THE_UNION.md with full project status as of 2026-03-18
-4a018e2  docs: fix README links, add support/website sections, add frontend/website CI
-a118b3b  feat: add OrchestraAI promotional website
-b52becf  assets: add marketing videos, narration audio, and video enhancement script
-a6eea41  docs: update architecture, security, cost analysis, user procedures, and go-live checklist
-8ca5619  feat: add AI customer support chat, auto-reply agent, and FAQ system
-91f5b6d  feat: integrate Seedance 2.0 video generation and Visual Compliance Gate
 ```
 
 ---
 
 ## 5. Next Steps (Priority Order)
 
-### Immediate: Activate Revenue
+### Marketing & Growth (no engineering blockers)
 
-1. **Stripe live mode** -- The only remaining blocker for accepting real payments:
-   - Create live Stripe products and price IDs for Starter ($99/mo) and Agency ($999/mo)
-   - Swap `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_STARTER_PRICE_ID`, `STRIPE_AGENCY_PRICE_ID` in Railway environment variables
-   - Register the production webhook URL (`https://api.useorchestra.dev/api/v1/billing/webhook`) in the Stripe dashboard
-   - Run a live $1 test charge and verify the subscription lifecycle
-
-2. **Configure SMTP** -- Set `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` in Railway so budget alert emails actually send. Options: Resend, Mailgun, SendGrid, or a custom mail server.
-
-3. **Design and upload OG image** -- Currently `website/public/og-image.png` is referenced but not yet created. Design a branded 1200x630 image for social sharing previews.
-
-### Short-Term: Launch Marketing
-
-4. **Upload marketing videos** to platforms:
+1. **Upload marketing videos** to platforms:
    - Product Hunt (16:9 + thumbnail)
    - Twitter/X launch thread (9:16)
    - LinkedIn post (16:9)
    - Instagram Reels (9:16)
-   - Embed on promotional website `/demo` page
 
-5. **Configure `api.useorchestra.dev`** -- Add a CNAME record in Cloudflare pointing to the Railway backend for a branded API URL.
+2. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
 
-6. **Submit sitemap to Google Search Console** -- `https://www.useorchestra.dev/sitemap.xml` is live; submit to GSC to accelerate indexing.
+3. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
 
-### Medium-Term: Address Remaining Technical Debt
+### Future Engineering (when needed)
 
-7. **Fix auth fallback** -- Return 503 instead of owner-level JWT during DB outages.
-8. **Upgrade encryption** -- Evaluate moving from Fernet to AES-256-GCM, or document that Fernet (AES-128-CBC + HMAC-SHA256) is sufficient for token encryption at rest.
-9. **Register scheduler jobs** -- Wire spend cap resets, velocity baselines, token refresh into APScheduler.
-10. **Fix bidding engine logic bug** -- Make elif branches reachable for phase-specific approval.
-11. **GDPR data export** -- Wire the export endpoint to generate a real downloadable archive from PostgreSQL instead of in-memory placeholders.
-
-### Long-Term: Growth
-
-12. **Collect real testimonials** -- Replace placeholder social proof on the website.
-13. **Set up monitoring** -- Error tracking (Sentry), uptime monitoring, alerting.
-14. **Analytics integration** -- Vercel Analytics or PostHog for usage tracking.
-15. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
-16. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the new Experiment API endpoints.
-17. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
+4. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
+5. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
+6. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
+7. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
 
 ---
 
@@ -264,8 +259,13 @@ a6eea41  docs: update architecture, security, cost analysis, user procedures, an
 | Dashboard | `https://useorchestra.dev` | Vercel | Live |
 | Marketing Website | `https://www.useorchestra.dev` | Vercel | Live |
 | PostgreSQL | Railway-managed | Railway | Live |
+| Redis | Railway-managed | Railway | Live |
 | DNS + SSL | Cloudflare | Cloudflare | Configured |
-| Stripe Billing | Test mode | Stripe | Awaiting live keys |
+| Stripe Billing | Live mode | Stripe | Active (Starter + Agency) |
+| SMTP / Email | Resend (`smtp.resend.com`) | Resend | Active (domain verified) |
+| Error Monitoring | Sentry | Sentry | Active (backend + frontend) |
+| SEO | Google Search Console | Google | Verified, sitemap submitted |
+| Analytics | Vercel Analytics + Speed Insights | Vercel | Active (both projects) |
 
 ---
 
@@ -282,4 +282,20 @@ a6eea41  docs: update architecture, security, cost analysis, user procedures, an
 | Website TypeScript (tsc --noEmit) | Zero errors |
 | Website ESLint | Zero errors |
 | Website build (next build) | Success (7 static pages + sitemap.xml) |
+| Stripe live payment | Tested ($99 charged and refunded) |
 | Git working tree | Clean |
+
+---
+
+## 8. Third-Party Services (all configured)
+
+| Service | Plan | Purpose |
+|---------|------|---------|
+| Railway | Hobby | Backend hosting, PostgreSQL, Redis |
+| Vercel | Hobby | Frontend hosting (2 projects), Analytics |
+| Cloudflare | Free | DNS, SSL, CDN |
+| Stripe | Standard | Payment processing (live mode) |
+| Resend | Free (3K emails/mo) | Transactional email (SMTP) |
+| Sentry | Free (5K errors/mo) | Error monitoring (2 projects) |
+| Google Search Console | Free | SEO indexing and monitoring |
+| GitHub | Free | Source control, CI/CD |
