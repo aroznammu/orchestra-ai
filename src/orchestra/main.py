@@ -31,6 +31,18 @@ from orchestra.api.routes import (
 )
 from orchestra.config import get_settings
 
+settings_early = get_settings()
+if settings_early.has_sentry:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=settings_early.sentry_dsn,
+        traces_sample_rate=0.2,
+        environment=settings_early.app_env.value,
+        release=f"orchestraai@0.1.0",
+        send_default_pii=False,
+    )
+
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 from orchestra.core.exceptions import (
     AuthenticationError,

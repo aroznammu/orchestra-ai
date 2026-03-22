@@ -75,6 +75,9 @@ ffmpeg-python = ">=0.2"
 # Email notifications
 aiosmtplib = "^3.0"
 
+# Error monitoring
+sentry-sdk = {extras = ["fastapi"], version = "^2.55"}
+
 # Utilities
 python-multipart = "^0.0.18"
 python-dotenv = "^1.0"

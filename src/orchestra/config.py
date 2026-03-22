@@ -103,6 +103,13 @@ class Settings(BaseSettings):
     def has_smtp(self) -> bool:
         return bool(self.smtp_host)
 
+    # Sentry (error monitoring)
+    sentry_dsn: str = ""
+
+    @property
+    def has_sentry(self) -> bool:
+        return bool(self.sentry_dsn)
+
     # Stripe billing
     stripe_secret_key: SecretStr = SecretStr("")
     stripe_webhook_secret: SecretStr = SecretStr("")
