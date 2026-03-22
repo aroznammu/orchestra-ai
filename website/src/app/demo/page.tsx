@@ -55,12 +55,18 @@ export default function DemoPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Scroll through each stage of the AI pipeline below.
+            Prefer video? Watch the overview first, or scroll for the interactive
+            walkthrough below.
           </motion.p>
         </div>
       </section>
 
       {/* Divider */}
+      <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
+
+      {/* 90s overview — early placement for visitors who want a quick watch */}
+      <DemoWatchVideoSection />
+
       <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
 
       {/* ============== SCENE 2: Content Creation ============== */}
@@ -114,8 +120,6 @@ export default function DemoPage() {
       </section>
 
       <div className="section-glow-divider neon-line mx-auto h-px max-w-4xl" />
-
-      <DemoWatchVideoSection />
 
       {/* ============== SCENE 6: CTA End Frame ============== */}
       <section className="relative px-6 py-28">

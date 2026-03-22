@@ -10,7 +10,11 @@ export default function DemoWatchVideoSection() {
   const [active, setActive] = useState(false);
 
   return (
-    <section className="relative px-6 py-20" aria-labelledby="demo-watch-heading">
+    <section
+      id="demo-overview-video"
+      className="relative scroll-mt-24 px-6 py-16 sm:py-20"
+      aria-labelledby="demo-watch-heading"
+    >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-indigo-950/[0.06] to-transparent" />
       <div className="relative mx-auto max-w-3xl text-center">
         <motion.h2
