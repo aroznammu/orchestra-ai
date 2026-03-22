@@ -4,6 +4,7 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel, Field
 
 from orchestra.api.deps import CurrentUser, DbSession
@@ -60,13 +61,14 @@ async def request_data_export(
 @router.post("/export/{request_id}/process", response_model=ExportResponse)
 async def process_data_export(
     request_id: str,
+    db: DbSession,
     user: CurrentUser = None,
 ) -> ExportResponse:
     """Process a pending data export request."""
     check_permission(user.role, Permission.DATA_EXPORT)
 
     manager = get_gdpr_manager()
-    result = await manager.process_data_export(request_id)
+    result = await manager.process_data_export(request_id, db=db)
 
     if not result:
         raise HTTPException(status_code=404, detail="Export request not found or already processed")
@@ -75,6 +77,28 @@ async def process_data_export(
         request_id=result.id,
         status=result.status,
         download_url=result.download_url,
+    )
+
+
+@router.get("/exports/{request_id}/download")
+async def download_export(
+    request_id: str,
+    user: CurrentUser = None,
+) -> ORJSONResponse:
+    """Download the exported data as JSON."""
+    check_permission(user.role, Permission.DATA_EXPORT)
+
+    manager = get_gdpr_manager()
+    data = manager.get_export_data(request_id)
+
+    if data is None:
+        raise HTTPException(status_code=404, detail="Export not found or not yet processed")
+
+    return ORJSONResponse(
+        content={"export_id": request_id, "tenant_data": data},
+        headers={
+            "Content-Disposition": f'attachment; filename="gdpr-export-{request_id}.json"',
+        },
     )
 
 

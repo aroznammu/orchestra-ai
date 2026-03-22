@@ -90,7 +90,21 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
     )
     if "postgresql" in settings.database_url:
         await _run_migrations()
+
+    from orchestra.core.scheduler import start_scheduler, stop_scheduler
+
+    try:
+        start_scheduler()
+        logger.info("scheduler_started_in_lifespan")
+    except Exception as e:
+        logger.warning("scheduler_start_failed", error=str(e))
+
     yield
+
+    try:
+        stop_scheduler()
+    except Exception:
+        pass
     logger.info("shutting_down")
 
 

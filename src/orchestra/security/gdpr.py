@@ -53,6 +53,7 @@ class GDPRManager:
         self._export_requests: list[DataExportRequest] = []
         self._deletion_requests: list[DataDeletionRequest] = []
         self._consent_records: list[ConsentRecord] = []
+        self._export_data: dict[str, dict[str, Any]] = {}
 
     async def request_data_export(
         self,
@@ -78,35 +79,34 @@ class GDPRManager:
     async def process_data_export(
         self,
         request_id: str,
+        db: AsyncSession | None = None,
     ) -> DataExportRequest | None:
-        """Process a pending data export.
-
-        In production, this would:
-        1. Query all tenant data from PostgreSQL
-        2. Export vectors from Qdrant
-        3. Package as JSON/CSV
-        4. Upload to secure temporary storage
-        5. Generate download URL with expiry
-        """
+        """Process a pending data export by querying PostgreSQL."""
         for req in self._export_requests:
             if req.id == request_id and req.status == "pending":
                 req.status = "processing"
 
-                # Collect data categories
-                exported_data = await self._collect_tenant_data(req.tenant_id)
+                exported_data = await self._collect_tenant_data(req.tenant_id, db=db)
 
                 req.status = "completed"
                 req.completed_at = datetime.now(UTC).isoformat()
                 req.download_url = f"/api/v1/gdpr/exports/{req.id}/download"
 
+                self._export_data[req.id] = exported_data
+
                 logger.info(
                     "data_export_completed",
                     request_id=request_id,
                     categories=list(exported_data.keys()),
+                    total_records=sum(len(v) for v in exported_data.values() if isinstance(v, list)),
                 )
 
                 return req
         return None
+
+    def get_export_data(self, request_id: str) -> dict[str, Any] | None:
+        """Return the collected export data for a completed request."""
+        return self._export_data.get(request_id)
 
     async def request_data_deletion(
         self,
@@ -225,22 +225,134 @@ class GDPRManager:
     def get_deletion_requests(self, tenant_id: str) -> list[DataDeletionRequest]:
         return [r for r in self._deletion_requests if r.tenant_id == tenant_id]
 
-    async def _collect_tenant_data(self, tenant_id: str) -> dict[str, Any]:
-        """Collect all data for a tenant (placeholder for DB queries)."""
-        return {
-            "users": [],
-            "campaigns": [],
-            "posts": [],
-            "analytics": [],
-            "platform_connections": [],
-            "audit_logs": [],
+    async def _collect_tenant_data(
+        self, tenant_id: str, db: AsyncSession | None = None,
+    ) -> dict[str, Any]:
+        """Collect all data for a tenant from PostgreSQL."""
+        from sqlalchemy import select as sa_select
+
+        data: dict[str, Any] = {
             "consent_records": [
                 r.model_dump() for r in self._consent_records
                 if r.tenant_id == tenant_id
             ],
-            "agent_decisions": [],
-            "spend_records": [],
         }
+
+        if db is None:
+            return data
+
+        import uuid as _uuid
+
+        from orchestra.db.models import (
+            AuditLog,
+            Campaign,
+            CampaignPost,
+            ChatMessage,
+            ChatSession,
+            Experiment,
+            PlatformConnection,
+            SpendRecord,
+            Tenant,
+            User,
+        )
+
+        tid = _uuid.UUID(tenant_id)
+
+        tenant_row = (await db.execute(sa_select(Tenant).where(Tenant.id == tid))).scalar_one_or_none()
+        data["tenant"] = {
+            "id": str(tenant_row.id), "name": tenant_row.name, "slug": tenant_row.slug,
+        } if tenant_row else None
+
+        users = (await db.execute(sa_select(User).where(User.tenant_id == tid))).scalars().all()
+        data["users"] = [
+            {"id": str(u.id), "email": u.email, "full_name": u.full_name,
+             "role": u.role.value, "created_at": str(u.created_at)}
+            for u in users
+        ]
+
+        campaigns = (await db.execute(sa_select(Campaign).where(Campaign.tenant_id == tid))).scalars().all()
+        campaign_ids = [c.id for c in campaigns]
+        data["campaigns"] = [
+            {"id": str(c.id), "name": c.name, "status": c.status.value if hasattr(c.status, "value") else str(c.status),
+             "platforms": c.platforms, "budget": float(c.budget) if c.budget else 0,
+             "created_at": str(c.created_at)}
+            for c in campaigns
+        ]
+
+        if campaign_ids:
+            posts = (await db.execute(
+                sa_select(CampaignPost).where(CampaignPost.campaign_id.in_(campaign_ids))
+            )).scalars().all()
+            data["posts"] = [
+                {"id": str(p.id), "campaign_id": str(p.campaign_id), "platform": p.platform,
+                 "content": p.content, "status": p.status.value if hasattr(p.status, "value") else str(p.status),
+                 "created_at": str(p.created_at)}
+                for p in posts
+            ]
+
+            experiments = (await db.execute(
+                sa_select(Experiment).where(Experiment.campaign_id.in_(campaign_ids))
+            )).scalars().all()
+            data["experiments"] = [
+                {"id": str(e.id), "campaign_id": str(e.campaign_id), "name": e.name,
+                 "status": e.status.value if hasattr(e.status, "value") else str(e.status),
+                 "hypothesis": e.hypothesis, "variants": e.variants}
+                for e in experiments
+            ]
+        else:
+            data["posts"] = []
+            data["experiments"] = []
+
+        connections = (await db.execute(
+            sa_select(PlatformConnection).where(PlatformConnection.tenant_id == tid)
+        )).scalars().all()
+        data["platform_connections"] = [
+            {"id": str(pc.id), "platform": pc.platform, "created_at": str(pc.created_at)}
+            for pc in connections
+        ]
+
+        spend = (await db.execute(
+            sa_select(SpendRecord).where(SpendRecord.tenant_id == tid)
+        )).scalars().all()
+        data["spend_records"] = [
+            {"id": str(s.id), "campaign_id": str(s.campaign_id) if s.campaign_id else None,
+             "platform": s.platform, "amount": float(s.amount),
+             "recorded_at": str(s.recorded_at)}
+            for s in spend
+        ]
+
+        audit = (await db.execute(
+            sa_select(AuditLog).where(AuditLog.tenant_id == tid)
+        )).scalars().all()
+        data["audit_logs"] = [
+            {"id": str(a.id), "action": a.action, "resource_type": a.resource_type,
+             "details": a.details, "created_at": str(a.created_at)}
+            for a in audit
+        ]
+
+        sessions = (await db.execute(
+            sa_select(ChatSession).where(ChatSession.tenant_id == tid)
+        )).scalars().all()
+        session_ids = [s.id for s in sessions]
+        data["chat_sessions"] = [
+            {"id": str(s.id), "title": s.title, "status": s.status,
+             "created_at": str(s.created_at)}
+            for s in sessions
+        ]
+
+        if session_ids:
+            messages = (await db.execute(
+                sa_select(ChatMessage).where(ChatMessage.session_id.in_(session_ids))
+            )).scalars().all()
+            data["chat_messages"] = [
+                {"id": str(m.id), "session_id": str(m.session_id), "role": m.role,
+                 "content": m.content, "created_at": str(m.created_at)}
+                for m in messages
+            ]
+        else:
+            data["chat_messages"] = []
+
+        return data
 
     async def _delete_tenant_data(
         self, tenant_id: str, db: AsyncSession | None = None,

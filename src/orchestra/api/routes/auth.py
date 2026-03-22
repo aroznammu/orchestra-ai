@@ -130,9 +130,7 @@ async def login(request: LoginRequest) -> TokenResponse:
                 logger.info("user_logged_in_db", email=request.email)
                 return TokenResponse(access_token=token)
 
-            if user:
-                raise HTTPException(status_code=401, detail="Invalid email or password")
-            raise RuntimeError("User not found, fallback to token generation")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
 
     except HTTPException:
         raise
