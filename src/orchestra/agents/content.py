@@ -182,6 +182,18 @@ def _build_prompt(
     if target_audience:
         audience_line = f"\nTarget audience: {json.dumps(target_audience)}"
 
+    plat = platform.lower()
+    ctv_note = ""
+    if plat in ("ctv", "streaming_tv"):
+        ctv_note = (
+            "\n\nProgrammatic CTV / streaming TV:\n"
+            "- If the user wants high reach or television-style placement, budget may be allocated to "
+            "the 'ctv' platform to buy streaming TV inventory via the integrated DSP.\n"
+            "- Only recommend or assume CTV spend when a Seedance (or similar) video asset exists and "
+            "has passed the Vision compliance gate (no uncleared logos or celebrity likeness).\n"
+            "- Copy should work as voiceover or on-screen supers for a short CTV spot.\n"
+        )
+
     return (
         f"You are a world-class social media marketer. "
         f"Write a single {platform} post about: {topic}\n\n"
@@ -192,7 +204,8 @@ def _build_prompt(
         f"- Include a clear call-to-action ({style.get('cta_style', 'engage')})\n"
         f"- Include 2-4 relevant hashtags inline\n"
         f"- This is variant #{variant_num}, make it unique"
-        f"{audience_line}\n\n"
+        f"{audience_line}"
+        f"{ctv_note}\n\n"
         f"Write ONLY the post text. No explanations, no labels, no quotes around it."
     )
 

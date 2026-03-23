@@ -37,6 +37,10 @@ export interface PlatformMetrics {
   click_rate: number;
   spend: number;
   roi: number;
+  /** Video completion rate (0–1), primarily for CTV / programmatic video */
+  video_completion_rate?: number;
+  /** Effective CPM ($), primarily for CTV / programmatic */
+  effective_cpm?: number;
 }
 
 export interface OverviewResponse {

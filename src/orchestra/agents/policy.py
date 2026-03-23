@@ -88,6 +88,22 @@ PLATFORM_CONTENT_RULES: dict[str, dict] = {
         "tone_guidelines": "clear, benefit-focused, compliant",
         "banned_topics": ["misleading claims", "prohibited products"],
     },
+    "ctv": {
+        "max_length": 5000,
+        "allows_links": True,
+        "allows_media": True,
+        "max_media": 3,
+        "tone_guidelines": "brand-safe, high-impact, suitable for living-room CTV",
+        "banned_topics": ["misleading claims", "prohibited products", "uncleared third-party IP"],
+    },
+    "streaming_tv": {
+        "max_length": 5000,
+        "allows_links": True,
+        "allows_media": True,
+        "max_media": 3,
+        "tone_guidelines": "brand-safe, high-impact, suitable for living-room CTV",
+        "banned_topics": ["misleading claims", "prohibited products", "uncleared third-party IP"],
+    },
 }
 
 
@@ -108,7 +124,7 @@ async def validate_content_policy(
         warnings: list[str] = []
         suggestions: list[str] = []
 
-        rules = PLATFORM_CONTENT_RULES.get(platform, {})
+        rules = PLATFORM_CONTENT_RULES.get(platform.lower(), {})
         if not rules:
             warnings.append(f"No policy rules defined for platform: {platform}")
             return {"valid": True, "errors": [], "warnings": warnings, "suggestions": []}

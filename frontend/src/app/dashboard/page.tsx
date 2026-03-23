@@ -30,6 +30,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { TooltipProps } from "recharts";
 
 // ---------------------------------------------------------------------------
 // Data fetching
@@ -117,15 +118,69 @@ function buildMetrics(
   ];
 }
 
+function formatPlatformLabel(name: string): string {
+  if (name.toLowerCase() === "ctv") return "Streaming TV (CTV)";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
 function buildChartData(
   platforms: Record<string, PlatformMetrics>,
-): { platform: string; impressions: number; clicks: number; spend: number }[] {
+): {
+  platform: string;
+  impressions: number;
+  clicks: number;
+  spend: number;
+  video_completion_rate: number;
+  effective_cpm: number;
+}[] {
   return Object.entries(platforms).map(([name, m]) => ({
-    platform: name.charAt(0).toUpperCase() + name.slice(1),
+    platform: formatPlatformLabel(name),
     impressions: m.impressions,
     clicks: m.clicks,
     spend: m.spend,
+    video_completion_rate: m.video_completion_rate ?? 0,
+    effective_cpm: m.effective_cpm ?? 0,
   }));
+}
+
+function PlatformPerformanceTooltip({
+  active,
+  payload,
+}: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload as {
+    platform: string;
+    impressions: number;
+    clicks: number;
+    spend: number;
+    video_completion_rate: number;
+    effective_cpm: number;
+  };
+  const isCtv = row.platform.includes("CTV");
+  return (
+    <div
+      className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs shadow-xl"
+      style={{ color: "#fafafa" }}
+    >
+      <p className="mb-1 font-semibold text-zinc-100">{row.platform}</p>
+      <p className="text-zinc-400">
+        Impressions: {row.impressions.toLocaleString()}
+      </p>
+      <p className="text-zinc-400">Clicks: {row.clicks.toLocaleString()}</p>
+      <p className="text-zinc-400">Spend: ${row.spend.toLocaleString()}</p>
+      {isCtv &&
+        (row.video_completion_rate > 0 || row.effective_cpm > 0) && (
+          <>
+            <p className="mt-1 border-t border-zinc-700 pt-1 text-violet-300">
+              VCR: {(row.video_completion_rate * 100).toFixed(1)}%
+            </p>
+            <p className="text-violet-300">
+              eCPM: ${row.effective_cpm.toFixed(2)}
+            </p>
+          </>
+        )}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -323,6 +378,40 @@ export default function DashboardPage() {
                   />
                 </BarChart>
               </ResponsiveContainer>
+              {overview.data?.platforms?.ctv &&
+                ((overview.data.platforms.ctv.video_completion_rate ?? 0) > 0 ||
+                  (overview.data.platforms.ctv.effective_cpm ?? 0) > 0) && (
+                  <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm">
+                    <h3 className="font-medium text-zinc-200">
+                      Streaming TV (CTV) — programmatic
+                    </h3>
+                    <p className="mt-1 text-zinc-500">
+                      Video completion rate (VCR) and effective CPM for
+                      connected-TV buys via DSP.
+                    </p>
+                    <dl className="mt-2 grid gap-1 sm:grid-cols-2">
+                      <div>
+                        <dt className="text-zinc-500">VCR</dt>
+                        <dd className="font-mono text-violet-300">
+                          {(
+                            (overview.data.platforms.ctv.video_completion_rate ??
+                              0) * 100
+                          ).toFixed(1)}
+                          %
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-zinc-500">eCPM</dt>
+                        <dd className="font-mono text-violet-300">
+                          $
+                          {(
+                            overview.data.platforms.ctv.effective_cpm ?? 0
+                          ).toFixed(2)}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                )}
             </div>
           )}
         </CardContent>

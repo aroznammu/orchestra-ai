@@ -30,6 +30,8 @@ class PlatformMetrics(BaseModel):
     click_rate: float = 0.0
     spend: float = 0.0
     roi: float = 0.0
+    video_completion_rate: float = 0.0
+    effective_cpm: float = 0.0
 
 
 class OverviewResponse(BaseModel):
@@ -115,26 +117,33 @@ async def get_platform_analytics(
     days: int = 30,
 ) -> dict[str, Any]:
     """Platform-specific metrics for the tenant."""
-    try:
-        PlatformType(platform)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unknown platform: {platform}")
+    normalized = platform.lower().replace("-", "_")
+    if normalized == "streaming_tv":
+        normalized = "ctv"
+    if normalized != "ctv":
+        try:
+            PlatformType(platform)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unknown platform: {platform}",
+            )
 
     trace = ExecutionTrace(trace_id=str(uuid.uuid4()), tenant_id=current_user.tenant_id)
     request = AnalyticsRequest(
-        platforms=[platform],
+        platforms=[normalized],
         date_range_days=days,
         include_insights=True,
     )
     result = await run_analytics(request, trace, tenant_id=current_user.tenant_id)
-    platform_data = result.cross_platform_summary.get("platforms", {}).get(platform, {})
+    platform_data = result.cross_platform_summary.get("platforms", {}).get(normalized, {})
 
     return {
-        "platform": platform,
+        "platform": normalized,
         "days": days,
         "metrics": platform_data,
         "insights": result.insights,
-        "benchmark": ENGAGEMENT_BENCHMARKS.get(platform, {}),
+        "benchmark": ENGAGEMENT_BENCHMARKS.get(normalized, {}),
     }
 
 

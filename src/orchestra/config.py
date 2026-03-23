@@ -110,6 +110,15 @@ class Settings(BaseSettings):
     def has_sentry(self) -> bool:
         return bool(self.sentry_dsn)
 
+    # Programmatic DSP / CTV (optional -- The Trade Desk-shaped API)
+    dsp_api_key: SecretStr = SecretStr("")
+    dsp_partner_id: str = ""
+    dsp_base_url: str = "https://api.example-dsp.test"
+
+    @property
+    def has_dsp(self) -> bool:
+        return bool(self.dsp_api_key.get_secret_value() and self.dsp_partner_id)
+
     # Stripe billing
     stripe_secret_key: SecretStr = SecretStr("")
     stripe_webhook_secret: SecretStr = SecretStr("")

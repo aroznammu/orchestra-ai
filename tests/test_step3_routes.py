@@ -192,7 +192,7 @@ class TestAnalyticsEndpoints:
 
     @pytest.mark.asyncio
     async def test_overview_falls_back_to_zeros(self, client):
-        """Without platform connections, metrics should be zeros not errors."""
+        """Without platform connections, overview succeeds; CTV may include illustrative DSP row."""
         token, uid, tid = _make_token()
 
         with patch("orchestra.agents.analytics_agent._fetch_real_platform_data", new_callable=AsyncMock, return_value={}):
@@ -204,8 +204,9 @@ class TestAnalyticsEndpoints:
         assert resp.status_code in (200, 503)
         if resp.status_code == 200:
             data = resp.json()
-            assert data["total_impressions"] == 0
-            assert data["total_spend"] == 0.0
+            assert data["total_impressions"] >= 0
+            assert data["total_spend"] >= 0.0
+            assert "ctv" in data["platforms"]
 
     @pytest.mark.asyncio
     async def test_platform_analytics_requires_auth(self, client):
@@ -226,6 +227,20 @@ class TestAnalyticsEndpoints:
             assert data["platform"] == "twitter"
             assert "metrics" in data
             assert "benchmark" in data
+
+    @pytest.mark.asyncio
+    async def test_platform_analytics_accepts_ctv(self, client):
+        token, uid, tid = _make_token()
+        with patch("orchestra.agents.analytics_agent._fetch_real_platform_data", new_callable=AsyncMock, return_value={}):
+            resp = await client.get(
+                "/api/v1/analytics/platform/ctv",
+                headers=_headers(token),
+            )
+        assert resp.status_code in (200, 503)
+        if resp.status_code == 200:
+            data = resp.json()
+            assert data["platform"] == "ctv"
+            assert "metrics" in data
 
     @pytest.mark.asyncio
     async def test_platform_analytics_rejects_unknown(self, client):

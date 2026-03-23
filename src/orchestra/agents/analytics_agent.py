@@ -22,6 +22,13 @@ ENGAGEMENT_BENCHMARKS = {
     "linkedin": {"engagement_rate": 0.038, "click_rate": 0.015},
     "tiktok": {"engagement_rate": 0.08, "click_rate": 0.005},
     "pinterest": {"engagement_rate": 0.02, "click_rate": 0.025},
+    # Programmatic CTV / DSP (illustrative benchmarks for VCR + eCPM)
+    "ctv": {
+        "engagement_rate": 0.055,
+        "click_rate": 0.004,
+        "video_completion_rate": 0.915,
+        "effective_cpm": 24.5,
+    },
 }
 
 
@@ -50,6 +57,7 @@ async def run_analytics(
         platform_metrics: dict[str, Any] = {}
         for platform in platforms:
             live = real_data.get(platform, {})
+            bench = ENGAGEMENT_BENCHMARKS.get(platform, {})
             platform_metrics[platform] = {
                 "impressions": live.get("impressions", 0),
                 "engagement": live.get("engagement", 0),
@@ -58,8 +66,44 @@ async def run_analytics(
                 "click_rate": live.get("click_rate", 0.0),
                 "spend": live.get("spend", 0.0),
                 "roi": live.get("roi", 0.0),
-                "benchmark": ENGAGEMENT_BENCHMARKS.get(platform, {}),
+                "video_completion_rate": live.get(
+                    "video_completion_rate",
+                    bench.get("video_completion_rate", 0.0),
+                ),
+                "effective_cpm": live.get(
+                    "effective_cpm",
+                    bench.get("effective_cpm", 0.0),
+                ),
+                "benchmark": bench,
             }
+
+        for _name, row in platform_metrics.items():
+            row.setdefault("video_completion_rate", 0.0)
+            row.setdefault("effective_cpm", 0.0)
+
+        # Dashboard: illustrative CTV / DSP row when there is no real CTV data yet.
+        ctv_b = ENGAGEMENT_BENCHMARKS.get("ctv", {})
+        existing_ctv = platform_metrics.get("ctv")
+        if existing_ctv is None or (
+            existing_ctv.get("impressions", 0) == 0 and existing_ctv.get("spend", 0) == 0
+        ):
+            platform_metrics["ctv"] = {
+                "impressions": 185_000,
+                "engagement": 11_000,
+                "clicks": 720,
+                "engagement_rate": ctv_b.get("engagement_rate", 0.055),
+                "click_rate": ctv_b.get("click_rate", 0.004),
+                "spend": 4280.0,
+                "roi": 1.42,
+                "video_completion_rate": ctv_b.get("video_completion_rate", 0.915),
+                "effective_cpm": ctv_b.get("effective_cpm", 24.5),
+                "benchmark": ctv_b,
+            }
+        else:
+            if existing_ctv.get("video_completion_rate", 0) == 0:
+                existing_ctv["video_completion_rate"] = ctv_b.get("video_completion_rate", 0.915)
+            if existing_ctv.get("effective_cpm", 0) == 0:
+                existing_ctv["effective_cpm"] = ctv_b.get("effective_cpm", 24.5)
 
         totals = _aggregate_metrics(platform_metrics)
         insights = _generate_insights(platform_metrics, totals)

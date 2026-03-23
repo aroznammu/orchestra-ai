@@ -70,6 +70,12 @@ INTENT_KEYWORDS: dict[str, IntentType] = {
     "video": IntentType.GENERATE_VIDEO,
     "generate video": IntentType.GENERATE_VIDEO,
     "video clip": IntentType.GENERATE_VIDEO,
+    "streaming tv": IntentType.PUBLISH_CONTENT,
+    "connected tv": IntentType.PUBLISH_CONTENT,
+    "ctv": IntentType.PUBLISH_CONTENT,
+    "roku": IntentType.PUBLISH_CONTENT,
+    "hulu": IntentType.PUBLISH_CONTENT,
+    "programmatic tv": IntentType.PUBLISH_CONTENT,
 }
 
 _VALID_INTENTS = {it.value for it in IntentType}
@@ -398,6 +404,7 @@ async def platform_node(state: OrchestratorState) -> OrchestratorState:
         return state
 
     platform = state.raw_payload.get("platform", "twitter")
+    plat_key = str(platform).lower()
 
     content_payload: dict[str, Any] = {}
     if state.content_result and state.content_result.variants:
@@ -420,6 +427,20 @@ async def platform_node(state: OrchestratorState) -> OrchestratorState:
         content_payload["scheduled_at"] = state.raw_payload["scheduled_at"]
 
     action = "schedule" if state.intent == IntentType.SCHEDULE_CONTENT else "publish"
+
+    if plat_key in ("ctv", "streaming_tv"):
+        from orchestra.agents.dsp_publish import execute_dsp_ctv_publish
+
+        state.platform_result = await execute_dsp_ctv_publish(
+            state,
+            content_payload,
+            action,
+            plat_key,
+        )
+        if not state.platform_result.success:
+            state.error = state.platform_result.error
+        state.depth += 1
+        return state
 
     access_token = state.raw_payload.get("access_token", "")
     if not access_token:
