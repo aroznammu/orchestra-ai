@@ -145,6 +145,8 @@ class AnalyticsRequest(BaseModel):
     date_range_days: int = 30
     metrics: list[str] = Field(default_factory=list)
     include_insights: bool = True
+    # When True, merge illustrative CTV/DSP row for marketing dashboard (overview only).
+    include_ctv_dashboard_preview: bool = False
 
 
 class AnalyticsResult(BaseModel):

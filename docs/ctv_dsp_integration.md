@@ -56,5 +56,5 @@ The Trade Desk API creates a CTV campaign and starts bidding on Roku and Hulu in
 | Financial guardrails | `check_all_guardrails` + tenant caps before DSP calls |
 | Vision gate | `upload_creative` only when visual compliance `safe` for generated video URLs |
 | Policy / content | `src/orchestra/agents/policy.py` (`ctv`, `streaming_tv`); `src/orchestra/agents/content.py` CTV strategy note; intent keywords in `orchestrator.py` |
-| Analytics / dashboard | `ENGAGEMENT_BENCHMARKS["ctv"]`, illustrative CTV row in `analytics_agent.py`; `PlatformMetrics` VCR + eCPM; `frontend` dashboard tooltip + CTV panel |
+| Analytics / dashboard | `ENGAGEMENT_BENCHMARKS["ctv"]`; overview sets `AnalyticsRequest.include_ctv_dashboard_preview=True` to merge an illustrative CTV row; `PlatformMetrics` VCR + eCPM; `frontend` dashboard tooltip + CTV panel |
 

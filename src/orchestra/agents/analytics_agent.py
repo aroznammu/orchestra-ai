@@ -81,29 +81,29 @@ async def run_analytics(
             row.setdefault("video_completion_rate", 0.0)
             row.setdefault("effective_cpm", 0.0)
 
-        # Dashboard: illustrative CTV / DSP row when there is no real CTV data yet.
         ctv_b = ENGAGEMENT_BENCHMARKS.get("ctv", {})
-        existing_ctv = platform_metrics.get("ctv")
-        if existing_ctv is None or (
-            existing_ctv.get("impressions", 0) == 0 and existing_ctv.get("spend", 0) == 0
-        ):
-            platform_metrics["ctv"] = {
-                "impressions": 185_000,
-                "engagement": 11_000,
-                "clicks": 720,
-                "engagement_rate": ctv_b.get("engagement_rate", 0.055),
-                "click_rate": ctv_b.get("click_rate", 0.004),
-                "spend": 4280.0,
-                "roi": 1.42,
-                "video_completion_rate": ctv_b.get("video_completion_rate", 0.915),
-                "effective_cpm": ctv_b.get("effective_cpm", 24.5),
-                "benchmark": ctv_b,
-            }
-        else:
-            if existing_ctv.get("video_completion_rate", 0) == 0:
-                existing_ctv["video_completion_rate"] = ctv_b.get("video_completion_rate", 0.915)
-            if existing_ctv.get("effective_cpm", 0) == 0:
-                existing_ctv["effective_cpm"] = ctv_b.get("effective_cpm", 24.5)
+        if request.include_ctv_dashboard_preview:
+            existing_ctv = platform_metrics.get("ctv")
+            if existing_ctv is None or (
+                existing_ctv.get("impressions", 0) == 0 and existing_ctv.get("spend", 0) == 0
+            ):
+                platform_metrics["ctv"] = {
+                    "impressions": 185_000,
+                    "engagement": 11_000,
+                    "clicks": 720,
+                    "engagement_rate": ctv_b.get("engagement_rate", 0.055),
+                    "click_rate": ctv_b.get("click_rate", 0.004),
+                    "spend": 4280.0,
+                    "roi": 1.42,
+                    "video_completion_rate": ctv_b.get("video_completion_rate", 0.915),
+                    "effective_cpm": ctv_b.get("effective_cpm", 24.5),
+                    "benchmark": ctv_b,
+                }
+            else:
+                if existing_ctv.get("video_completion_rate", 0) == 0:
+                    existing_ctv["video_completion_rate"] = ctv_b.get("video_completion_rate", 0.915)
+                if existing_ctv.get("effective_cpm", 0) == 0:
+                    existing_ctv["effective_cpm"] = ctv_b.get("effective_cpm", 24.5)
 
         totals = _aggregate_metrics(platform_metrics)
         insights = _generate_insights(platform_metrics, totals)

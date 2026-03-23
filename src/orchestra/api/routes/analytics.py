@@ -87,6 +87,7 @@ async def get_analytics_overview(
         platforms=active_platforms,
         date_range_days=days,
         include_insights=True,
+        include_ctv_dashboard_preview=True,
     )
     result = await run_analytics(request, trace, tenant_id=current_user.tenant_id)
     summary = result.cross_platform_summary
@@ -134,6 +135,7 @@ async def get_platform_analytics(
         platforms=[normalized],
         date_range_days=days,
         include_insights=True,
+        include_ctv_dashboard_preview=(normalized == "ctv"),
     )
     result = await run_analytics(request, trace, tenant_id=current_user.tenant_id)
     platform_data = result.cross_platform_summary.get("platforms", {}).get(normalized, {})
