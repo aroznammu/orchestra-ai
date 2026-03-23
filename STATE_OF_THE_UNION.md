@@ -1,9 +1,9 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-22 (latest session -- demo video pipeline + /demo UX)
+**Updated:** 2026-03-22 (latest session -- programmatic CTV / DSP + STATE sync)
 **Branch:** `master` (up to date with `origin/master`)
-**Test Suite:** 355 tests, all passing (14 test modules)
-**Commits:** 42 total
+**Test Suite:** 361 tests, all passing (15 test modules)
+**Commits:** 45 total
 
 ---
 
@@ -74,6 +74,14 @@ The marketing website underwent 8 iterative redesign passes based on detailed de
 - **Live on marketing site:** `website/public/orchestraai_demo.mp4` served as **`/orchestraai_demo.mp4`**. `DemoWatchVideoSection` plays this file (replaced Google sample placeholder).
 - **UX:** Overview video block placed **immediately below the hero** on `/demo` (before Step 1 interactive scenes); anchor **`#demo-overview-video`** for deep links.
 
+**Programmatic CTV / DSP (2026-03-22):**
+- **`DSPClient`** -- [`src/orchestra/connectors/dsp_client.py`](src/orchestra/connectors/dsp_client.py): TTD-shaped REST (`authenticate`, `create_ctv_campaign`, `create_ctv_ad_group`, `upload_creative`); creative upload requires `compliance_status == "Passed"`.
+- **Config:** `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` in [`src/orchestra/config.py`](src/orchestra/config.py) and [`.env.example`](.env.example) (optional until a real DSP contract exists).
+- **LangGraph:** [`platform_node`](src/orchestra/agents/orchestrator.py) routes `platform` **`ctv`** / **`streaming_tv`** to [`execute_dsp_ctv_publish`](src/orchestra/agents/dsp_publish.py) -- tenant spend guardrails (`check_all_guardrails` + caps), vision-gate enforcement for Seedance URLs, then DSP API sequence.
+- **Policy / content / intents:** `ctv` + `streaming_tv` rules in [`policy.py`](src/orchestra/agents/policy.py); CTV strategy copy in [`content.py`](src/orchestra/agents/content.py); keywords (streaming TV, Roku, Hulu, etc.) in [`orchestrator.py`](src/orchestra/agents/orchestrator.py).
+- **Analytics & dashboard:** `PlatformMetrics` adds **VCR** (`video_completion_rate`) and **eCPM** (`effective_cpm`); overview uses `AnalyticsRequest.include_ctv_dashboard_preview` for an illustrative **ctv** row; [`frontend` dashboard](frontend/src/app/dashboard/page.tsx) tooltip + CTV panel.
+- **Docs:** [`docs/ctv_dsp_integration.md`](docs/ctv_dsp_integration.md) (addendum + implementation table).
+
 ---
 
 ## 2. What Has Been Built (Complete Inventory)
@@ -143,7 +151,8 @@ Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
 | Optimization Agent | Complete | Thompson Sampling, UCB, Bayesian budget allocation |
 | Compliance Gate | Complete | Pre-action checks for content, targeting, budget |
 | Policy Validator | Complete | Per-platform rules (character limits, hashtags, media) |
-| Platform Dispatch | Complete | Publish/schedule to 9 platform connectors |
+| Platform Dispatch | Complete | Publish/schedule to 9 OAuth platform connectors |
+| CTV / DSP dispatch | Complete | `platform_node` → `dsp_publish` when `platform` is `ctv` or `streaming_tv`; optional live DSP via `DSP_*` env |
 | Support Agent | Complete | RAG context retrieval, FAQ matching, guardrailed responses, sensitive pattern sanitization, plan-aware upsell prompts |
 | Cost-Aware Router | Complete | Routes tasks to optimal LLM by complexity tier |
 | RAG Pipeline | Complete | Qdrant vector search with embedding fallback chain |
@@ -184,9 +193,10 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | test_platforms.py | 24 |
 | test_risk.py | 11 |
 | test_security.py | 14 |
-| test_step3_routes.py | 35 |
+| test_step3_routes.py | 36 |
+| test_dsp_client.py | 5 |
 | test_support_faq.py | 69 |
-| **Total** | **~312 functions (355 with parametrization)** |
+| **Total** | **~318 functions (361 with parametrization)** |
 
 ### 2.8 CI/CD (GitHub Actions)
 
@@ -206,7 +216,7 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 
 - 8 video files (60s marketing videos in 4 aspect ratios, 9s clips, final cut)
 - 2 thumbnails (landscape + portrait)
-- 1 narration audio (MP3)
+- **Demo walkthrough:** `orchestraai_demo.mp4` (~86s), `narration_full.mp3` + 5 section clips (`docs/video/`), `record_demo.py` (Playwright + ffmpeg)
 - 1 product image (JPEG)
 - 1 OG image (1200x630 branded social sharing card)
 - Video enhancement script (enhance_video.py)
@@ -286,15 +296,16 @@ c2805a9  fix: increase HeroPipeline node and label font sizes for readability
    - Twitter/X launch thread (9:16)
    - LinkedIn post (16:9)
    - Instagram Reels (9:16)
-3. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
-4. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
+4. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
+5. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
 
 ### Future Engineering (when needed)
 
-5. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
-6. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
-7. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
-8. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
+6. **Wire production DSP** -- Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway; align `DSPClient` HTTP paths/JSON with your vendor’s real API (code is TTD-shaped template).
+7. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
+8. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
+9. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
+10. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
 
 ---
 
@@ -332,6 +343,7 @@ c2805a9  fix: increase HeroPipeline node and label font sizes for readability
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
 | Demo video public asset | `website/public/orchestraai_demo.mp4` deployed with site |
+| CTV / DSP | `tests/test_dsp_client.py` + orchestrator `ctv`/`streaming_tv` branch |
 | Git working tree | Verify with `git status` before release |
 
 ---
