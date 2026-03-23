@@ -1,9 +1,9 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-22 (latest session -- round 8 redesign)
+**Updated:** 2026-03-22 (latest session -- demo video pipeline + /demo UX)
 **Branch:** `master` (up to date with `origin/master`)
 **Test Suite:** 355 tests, all passing (14 test modules)
-**Commits:** 36 total
+**Commits:** 42 total
 
 ---
 
@@ -68,6 +68,12 @@ The marketing website underwent 8 iterative redesign passes based on detailed de
 - All components lazy-loaded with `next/dynamic` and `ssr: false` where appropriate
 - HeroPipeline font sizes increased for readability (node boxes, labels, numbers all scaled up)
 
+**Automated demo video & `/demo` embed (2026-03-22):**
+- **Recording:** `docs/video/record_demo.py` -- Playwright (headless Chromium) screen capture + ffmpeg constant 30fps re-encode + merge with Edge TTS narration (`narration_full.mp3`). Avoids headed-window grey bars; timing aligned to on-page animations (example prompt, compliance, cross-platform, dashboard).
+- **Assets in repo:** `docs/video/orchestraai_demo.mp4`, `docs/video/narration_full.mp3`, per-scene `narration_01_hook.mp3` … `narration_05_cta.mp3`, `docs/video_demo.md` (90s script).
+- **Live on marketing site:** `website/public/orchestraai_demo.mp4` served as **`/orchestraai_demo.mp4`**. `DemoWatchVideoSection` plays this file (replaced Google sample placeholder).
+- **UX:** Overview video block placed **immediately below the hero** on `/demo` (before Step 1 interactive scenes); anchor **`#demo-overview-video`** for deep links.
+
 ---
 
 ## 2. What Has Been Built (Complete Inventory)
@@ -115,9 +121,9 @@ Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
 | Security | `/security` | 7 security sections with trust badges (SOC 2, GDPR, Apache 2.0) |
 | FAQ | `/faq` | Searchable accordion with category filter tabs, 7 categories, 14 questions |
 | Contact | `/contact` | Support channels (Email, Dashboard Chat, GitHub Issues), contact form |
-| Demo | `/demo` | Embedded video player, key feature screenshots, "Try it yourself" CTA |
+| Demo | `/demo` | Hero + **90s overview video** (`DemoWatchVideoSection`, `/orchestraai_demo.mp4`), then 4 interactive Framer scenes (ContentCreation, Compliance, CrossPlatform, Dashboard), bottom CTA + `CTABanner` |
 
-**Website Components (27):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, GraphCanvas3D, InspectorPanel, OrbitalAccent, useIs3DCapable, pipelineData, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, plus page-level components.
+**Website Components (31+):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, GraphCanvas3D, InspectorPanel, OrbitalAccent, useIs3DCapable, pipelineData, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, **DemoWatchVideoSection**, **ContentCreationScene**, **ComplianceScene**, **CrossPlatformScene**, **DashboardScene**, plus page-level components.
 
 **Visual System:** Dark + glow brand identity, animated gradient mesh, ambient orbs, noise overlay, neon sweep accents, glassmorphism cards, gradient CTA buttons, soft shadow dividers, section fade transitions.
 
@@ -192,9 +198,9 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | `frontend.yml` | Changes to `frontend/**` | TypeScript check, ESLint, Next.js build |
 | `website.yml` | Changes to `website/**` | TypeScript check, ESLint, Next.js build |
 
-### 2.9 Documentation (25 documents)
+### 2.9 Documentation (27+ documents)
 
-architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, website_redesign1.md through website_redesign8.md (8 iterative design feedback docs).
+architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, **video_demo.md** (90s Loom/script), **demo_video.md** (animated demo page spec), website_redesign1.md through website_redesign8.md (8 iterative design feedback docs).
 
 ### 2.10 Marketing Assets
 
@@ -251,22 +257,20 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 ```
 Branch:    master
 Remote:    Up to date with origin/master
-Commits:   36 total
+Commits:   42 total
 ```
 
 ### Recent commits (newest first):
 
 ```
+f62e40b  ux: move demo overview video below hero on /demo page
+7ae4c33  feat: embed demo video on /demo page, replace placeholder with OrchestraAI walkthrough
+0f5c7f5  feat: add automated demo video with narration audio and recording script
+1e4b7fe  Marketing site: demo interactivity, Seedance CRO, landing trust strip
+04d0c41  docs: update STATE_OF_THE_UNION with animated demo scenes and 3D pipeline work
+4167809  feat: replace demo page placeholder with 6 animated interactive scene components
 1e1c7d1  feat: add hybrid 3D/2D interactive pipeline demo with Three.js
 c2805a9  fix: increase HeroPipeline node and label font sizes for readability
-0223c5c  feat: complete 7-round marketing website redesign with interactive pipeline demo
-1c3c4ab  docs: comprehensive STATE_OF_THE_UNION update -- all engineering complete
-564ccd3  Add Vercel Analytics and Speed Insights to dashboard and website
-f7ffcf7  Fix 5 technical debt items: auth, encryption, scheduler, bidding, GDPR export
-a595840  Add Sentry error monitoring to backend and frontend
-64d7a6c  Add subscription prompt banner to dashboard for free users
-aa70343  Add Google Search Console verification file
-50203bb  Add OG image and fix sitemap for production
 ```
 
 ---
@@ -276,7 +280,8 @@ aa70343  Add Google Search Console verification file
 ### Marketing & Growth (no engineering blockers)
 
 1. ~~**Deploy updated marketing website**~~ -- Completed. All 8 rounds of redesign (including hybrid 3D/2D pipeline demo) pushed to production on Vercel.
-2. **Upload marketing videos** to platforms:
+2. ~~**Ship 90s demo video on `/demo`**~~ -- Completed. `orchestraai_demo.mp4` embedded via `DemoWatchVideoSection`; direct URL `https://www.useorchestra.dev/orchestraai_demo.mp4`; overview block under hero with `#demo-overview-video`.
+3. **Upload marketing videos** to platforms:
    - Product Hunt (16:9 + thumbnail)
    - Twitter/X launch thread (9:16)
    - LinkedIn post (16:9)
@@ -326,7 +331,8 @@ aa70343  Add Google Search Console verification file
 | Website build (next build) | Success (11 static pages including sitemap.xml) |
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
-| Git working tree | Clean |
+| Demo video public asset | `website/public/orchestraai_demo.mp4` deployed with site |
+| Git working tree | Verify with `git status` before release |
 
 ---
 
