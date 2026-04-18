@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { useState } from "react";
 
-const DEMO_CLIP =
-  "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+const DEMO_CLIP = "/orchestraai_demo.mp4";
+const DEMO_POSTER = "/og-image.png";
 
 export default function HowItWorksVideoEmbed() {
   const [playing, setPlaying] = useState(false);
@@ -27,12 +27,18 @@ export default function HowItWorksVideoEmbed() {
             <button
               type="button"
               onClick={() => setPlaying(true)}
+              aria-label="Play 90-second OrchestraAI walkthrough"
               className="group absolute inset-0 flex flex-col items-center justify-center gap-4 bg-zinc-950/85 transition hover:bg-zinc-950/75"
+              style={{
+                backgroundImage: `linear-gradient(rgba(8,8,13,0.7), rgba(8,8,13,0.85)), url(${DEMO_POSTER})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
             >
               <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-900/50 ring-4 ring-indigo-500/20 transition group-hover:scale-105">
                 <Play className="h-9 w-9 translate-x-1" fill="currentColor" />
               </span>
-              <span className="text-sm font-medium text-zinc-300">Watch demo</span>
+              <span className="text-sm font-medium text-zinc-300">Watch the 90-second walkthrough</span>
             </button>
           ) : (
             <video
@@ -41,11 +47,12 @@ export default function HowItWorksVideoEmbed() {
               controls
               playsInline
               autoPlay
+              poster={DEMO_POSTER}
             />
           )}
         </div>
         <p className="mt-3 text-center text-xs text-zinc-600">
-          Placeholder clip — swap for your narrated product recording anytime.
+          Narrated walkthrough · 1 natural-language command → 9 platforms.
         </p>
       </div>
     </motion.div>

@@ -1,9 +1,9 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-03-22 (latest session -- programmatic CTV / DSP + STATE sync)
+**Updated:** 2026-04-18 (full-codebase audit + CRO polish sync)
 **Branch:** `master` (up to date with `origin/master`)
-**Test Suite:** 361 tests, all passing (15 test modules)
-**Commits:** 45 total
+**Test Suite:** 361 tests, all passing (15 test modules, ~6.3s wall time)
+**Commits:** 46 total
 
 ---
 
@@ -11,9 +11,25 @@
 
 OrchestraAI is a **fully production-ready, revenue-collecting SaaS platform**. All engineering work is complete. The platform has been tested end-to-end including a real $99 Stripe payment (refunded).
 
+This state-of-the-union was rebuilt from a bottom-up codebase audit (source tree, `git log`, test collection, live page structure) to correct drift from previous versions and to capture the most recent CRO / marketing-site polish round.
+
 Since the previous state-of-the-union, the following milestones were completed:
 
-### Infrastructure & Services (completed 2026-03-22)
+### CRO / Conversion Optimization pass (commit `1e4b7fe`, 2026-03-22)
+
+A dedicated Principal-UX/CRO-style upgrade round layered on top of the 8-round redesign:
+
+- **`EnterpriseTrustStrip`** (`website/src/components/EnterpriseTrustStrip.tsx`) -- greyscale "Powered by & Secured by" strip under the hero with: Stripe Verified, SOC 2-Ready Architecture, Meta Ads API, ByteDance Seedance 2.0, Llama 3. Hover-to-color affordance, fades in with `whileInView`.
+- **`HowItWorksVideoEmbed`** (`website/src/components/HowItWorksVideoEmbed.tsx`) -- glass-morphism-framed video card embedded in the How It Works section. Idle play-button state, click-to-play HTML5 `<video>`, tagline "See the AI pause a bleeding campaign in 90 seconds."
+- **Structured testimonials** (`website/src/lib/constants.ts`) -- replaced generic attributions with named personas (Sarah Jenkins / Acme Digital, Marcus Chen / Northline Commerce, Elena Vasquez / Signal & Tide Agency), metric-specific quotes (−34% Meta CPA, $4.8K avoided, 42 accounts), and company-logo tiles (`companyLogo` two-letter marks).
+- **`GUARDED_TRIAL_MICROCOPY`** -- "14-Day Trial · Includes $50 in AI Video Credits · No Credit Card Required" rendered under every primary trial CTA (hero + `CTABanner` + pricing) to prevent Seedance/LLM-inference trial abuse while reinforcing trust.
+- **Sticky / scroll-aware Navbar** (`website/src/components/Navbar.tsx`) -- `fixed inset-x-0 top-0 z-50`, scroll-listener toggles a denser backdrop blur + shadow at `scrollY > 20`, "Get Started" pill persists across all scroll depths. Mobile menu via `AnimatePresence`.
+- **`ContentCreationScene` expansion** (`website/src/components/demo/scenes/ContentCreationScene.tsx`) -- Seedance 2.0 video-generation substate with skeleton-to-`<video>` transition; typing-effect example prompt; auto-scroll to Step 1 when the example prompt finishes typing.
+- **`ComplianceScene` VCG emphasis** -- distinct "Visual IP Compliance Scan" card animating frame-by-frame "Safe" checkmarks against celebrity likeness / copyrighted logos.
+- **`DashboardScene` + `BrowserMockup demoFinancialControls`** -- kill-switch and "Autonomous Budget Reallocation Active" badge elevated in the dashboard mockup to make financial safety the hero of Step 4.
+- **Source feedback docs** -- `docs/cro_demo_page.md` (demo-page brief) and `docs/cro_landing_page.md` (landing-page brief) capture the CRO specs that drove this round. Originally authored inside the Next.js App Router tree; relocated on 2026-04-18.
+
+### Infrastructure & Services (completed 2026-03-21 → 2026-03-22)
 
 1. **Stripe live mode activated** -- Real payments working. Starter ($99/mo) and Agency ($999/mo) with live webhook at `api.useorchestra.dev`. First real transaction processed and refunded.
 2. **SMTP email alerts via Resend** -- Domain `useorchestra.dev` verified (DKIM + SPF), budget alerts now send real emails.
@@ -88,56 +104,77 @@ The marketing website underwent 8 iterative redesign passes based on detailed de
 
 ### 2.1 Backend (FastAPI + Python)
 
+Total: **118 Python source files** under `src/orchestra/` across 12 top-level packages (`api`, `agents`, `connectors`, `bidding`, `compliance`, `core`, `db`, `intelligence`, `moat`, `notifications`, `platforms`, `rag`, `risk`, `security`) + `cli`.
+
 | Category | Count | Details |
 |----------|-------|---------|
-| API route files | 14 | auth, billing, campaigns, experiments, health, orchestrator, platforms, analytics, reports, audit, gdpr, kill_switch, support, faq |
+| API route files | 14 | `analytics`, `audit`, `auth`, `billing`, `campaigns`, `experiments`, `faq`, `gdpr`, `health`, `kill_switch`, `orchestrator`, `platforms`, `reports`, `support` |
 | API endpoints | 56+ | Full CRUD + specialized actions including GDPR export download endpoint |
-| Agent files | 16 | orchestrator, content, analytics, optimizer, compliance, platform, policy, video, safety, classify, cost_router, support_agent (with upsell), plus connectors |
-| DB models | 13 | Tenant, User, PlatformConnection, Campaign, CampaignPost, AuditLog, Experiment, KillSwitchEventLog, SpendRecord, BiddingHistory, ChatSession, ChatMessage, FAQEntry |
+| Agent modules (`src/orchestra/agents/`) | 13 | `orchestrator`, `content`, `analytics_agent`, `optimizer`, `compliance`, `platform_agent`, `policy`, `safety`, `support_agent`, `trace`, `contracts`, `dsp_publish`, plus `tools/` subpackage |
+| Core services (`src/orchestra/core/`) | 5 | `video_service`, `visual_compliance`, `cost_router`, `scheduler`, `billing`, `events`, `exceptions` |
+| DB models | 13 | `Tenant`, `User`, `PlatformConnection`, `Campaign`, `CampaignPost`, `AuditLog`, `Experiment`, `KillSwitchEventLog`, `APIKey`, `ChatSession`, `ChatMessage`, `FAQEntry`, `SpendRecord` (see `src/orchestra/db/models.py`) |
+| Alembic migrations | 4 | `f1ee2468d878_initial_schema`, `a2b3c4d5e6f7_add_kill_switch_events`, `b3c4d5e6f7a8_add_stripe_billing_fields`, `c4d5e6f7a8b9_add_support_chat_faq` |
 | Notification modules | 1 | `notifications/email.py` -- async SMTP sender for budget alerts via Resend |
-| Alembic migrations | Present | Schema for all 13 models including support/FAQ tables |
-| RBAC permissions | 26 | Including support:view and support:manage |
+| RBAC permissions | 26 | Including `support:view` and `support:manage` |
 | Error monitoring | Sentry | Auto-captures exceptions with traces, environment tagging |
-| Scheduler | APScheduler | Daily spend resets, monthly counter resets, hourly velocity baselines |
+| Scheduler | APScheduler | Daily spend resets, monthly counter resets, hourly velocity baselines (wired into FastAPI `lifespan`) |
 | Encryption | AES-256-GCM + Fernet | Dual-mode with auto-detection on decrypt |
 
-### 2.2 Frontend Dashboard (Next.js 16)
+### 2.2 Frontend Dashboard (Next.js 16 + React 19 + Tailwind 4)
+
+Next.js App Router. 10 routable pages, 1 root redirect, 1 global error page, 4 shared layout/UI components (`AppShell`, `Header`, `Sidebar`, `Providers`, `ui/card`). 17 `.tsx` files total.
 
 | Page | Route | Purpose |
 |------|-------|---------|
-| Login / Signup | `/login` | Authentication + registration with JWT |
-| Dashboard | `/dashboard` | Metrics overview + subscription prompt for free users |
+| Login / Signup | `/login` | Authentication + registration with JWT (toggles signup flow inline) |
+| Dashboard | `/dashboard` | Metrics overview, CTV column with VCR/eCPM tooltip, subscription prompt banner for free users |
 | Campaigns | `/campaigns` | Campaign list, create, launch, pause |
 | Analytics | `/analytics` | Cross-platform metrics and charts (Recharts) |
-| Orchestrator | `/orchestrator` | Natural language AI interface |
-| Platforms | `/platforms` | OAuth connection management for 9 platforms |
-| Billing | `/billing` | Stripe checkout, subscription management |
-| Settings | `/settings` | Account and tenant configuration |
-| Password | `/settings/password` | Change password |
-| Kill Switch | `/kill-switch` | Emergency spend halt |
+| AI Orchestrator | `/orchestrator` | Natural-language AI interface |
 | Support | `/support` | AI chat + FAQ accordion |
+| Settings | `/settings` | Account / team / API-keys hub (team + API-keys placeholders link out to future work) |
+| Billing & Plans | `/settings/billing` | Stripe checkout + subscription management |
+| Change Password | `/settings/password` | Password change |
+| Landing redirect | `/` | Redirects signed-out visitors to `/login`, signed-in to `/dashboard` |
 
-Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights.
+**Sidebar nav (`frontend/src/components/layout/Sidebar.tsx`)**: Dashboard, Campaigns, Analytics, AI Orchestrator, Support, Settings (6 items; auto-expand on hover).
+
+Platform-connection management and kill-switch controls are exposed through the backend REST API and the AI Orchestrator text interface -- they are not yet standalone dashboard pages.
+
+Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights, TanStack Query for data fetching, `lucide-react` icons, `recharts` for charts.
 
 ### 2.3 Promotional Website (Next.js 16, separate project)
 
+42 `.tsx` files (7 pages + 7 layouts + 28 components). Three.js, Framer Motion, and Tailwind 4 as the visual-effects stack.
+
 | Page | Route | Content |
 |------|-------|---------|
-| Landing | `/` | Hero (animated pipeline + BrowserMockup + product showcase panels), trust metrics bar, interactive pipeline demo, problem/solution, category positioning, platform logos, how-it-works, feature highlights, architecture diagram, animated stats, comparison table, developer section, testimonials, CTA |
+| Landing | `/` | Sticky Navbar, hero (animated pipeline + BrowserMockup + product showcase panels), **EnterpriseTrustStrip** ("Powered by & Secured by" greyscale logo strip), trust metrics bar, interactive 3D/2D pipeline demo, problem/solution, category positioning, platform logos, How It Works + **HowItWorksVideoEmbed** (glass-morphism video card), feature highlights, architecture diagram, animated stats, comparison table, developer section, structured testimonials (named personas + metrics + company-logo tiles), CTA banner + guarded-trial microcopy |
 | Features | `/features` | 8 detailed feature sections, code snippet previews, tech stack grid |
-| Pricing | `/pricing` | Starter/Agency cards, self-host option, ROI calculator, feature comparison matrix |
+| Pricing | `/pricing` | Starter/Agency cards, self-host option, ROI calculator, feature comparison matrix, guarded-trial microcopy under primary CTAs |
 | Security | `/security` | 7 security sections with trust badges (SOC 2, GDPR, Apache 2.0) |
 | FAQ | `/faq` | Searchable accordion with category filter tabs, 7 categories, 14 questions |
 | Contact | `/contact` | Support channels (Email, Dashboard Chat, GitHub Issues), contact form |
-| Demo | `/demo` | Hero + **90s overview video** (`DemoWatchVideoSection`, `/orchestraai_demo.mp4`), then 4 interactive Framer scenes (ContentCreation, Compliance, CrossPlatform, Dashboard), bottom CTA + `CTABanner` |
+| Demo | `/demo` | Hero + **`DemoWatchVideoSection`** (90s overview, `/orchestraai_demo.mp4`, anchor `#demo-overview-video`), then 4 interactive Framer scenes -- `ContentCreationScene` (typing-effect prompt + Seedance video render), `ComplianceScene` (Visual IP Compliance Scan frame-by-frame), `CrossPlatformScene`, `DashboardScene` (kill-switch + autonomous-budget-reallocation badge). Bottom CTA + `CTABanner` |
 
-**Website Components (31+):** Navbar, Footer, GradientText, SectionHeading, FeatureCard, BrowserMockup, FeatureShowcase, HeroPipeline, PipelineDemo, PipelineCanvas, GraphCanvas3D, InspectorPanel, OrbitalAccent, useIs3DCapable, pipelineData, PlatformGrid, AnimatedCounter, CTABanner, ComparisonTable, ArchitectureDiagram, VideoEmbed, **DemoWatchVideoSection**, **ContentCreationScene**, **ComplianceScene**, **CrossPlatformScene**, **DashboardScene**, plus page-level components.
+**Website Components (28 files, `website/src/components/`):**
+
+- Chrome / layout: `Navbar` (sticky + scroll-aware), `Footer`, `SectionHeading`, `GradientText`, `AccordionItem`.
+- Hero / mockups: `BrowserMockup` (+ `FeatureShowcase` re-export), `HeroPipeline`, `AnimatedCounter`, `PlatformGrid`, `ArchitectureDiagram`.
+- Cards / sections: `FeatureCard`, `PricingCard`, `ComparisonTable`, `CTABanner`, `EnterpriseTrustStrip` (new), `HowItWorksVideoEmbed` (new).
+- Video / media: `VideoEmbed`, `demo/DemoWatchVideoSection`.
+- Interactive pipeline demo (`demo/`): `PipelineDemo`, `PipelineCanvas` (2D SVG), `GraphCanvas3D` (Three.js / R3F), `InspectorPanel`, `OrbitalAccent`, plus `demo/scenes/` -- `ContentCreationScene`, `ComplianceScene`, `CrossPlatformScene`, `DashboardScene`.
+- Utility / forms: `ContactForm`.
+
+Shared data/hooks live in `website/src/lib/` (`constants.ts` with 7 domain groups incl. `TESTIMONIALS`, `GUARDED_TRIAL_MICROCOPY`, `FEATURES_DETAILED`, `SECURITY_FEATURES`, `FAQ_DATA`; `demo/pipelineData.ts`; `useIs3DCapable` hook).
 
 **Visual System:** Dark + glow brand identity, animated gradient mesh, ambient orbs, noise overlay, neon sweep accents, glassmorphism cards, gradient CTA buttons, soft shadow dividers, section fade transitions.
 
-**SEO:** Auto-generated `sitemap.xml` (7 URLs), `robots.txt`, Open Graph + Twitter meta tags on every page, branded OG image (1200x630).
+**SEO:** Auto-generated `sitemap.xml` (7 URLs), `robots.txt`, Open Graph + Twitter meta tags on every page, branded OG image (1200x630), Google Search Console verification file (`googlec4e7f501ca1a924d.html`).
 
 **Integrations:** Google Search Console (verified), Vercel Analytics, Vercel Speed Insights.
+
+**Public assets (`website/public/`):** `orchestraai_demo.mp4` (90s walkthrough, 10.4 MB), `og-image.png`, `logo.svg`, `robots.txt`, `googlec4e7f501ca1a924d.html`, Next.js default SVGs.
 
 ### 2.4 AI Agents and Intelligence
 
@@ -179,6 +216,8 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 
 ### 2.7 Testing
 
+15 test modules + `conftest.py`. `pytest tests --collect-only` reports **361 tests**, all green (`361 passed, 6 warnings in 6.31s`).
+
 | Test Module | Tests |
 |-------------|-------|
 | test_auth.py | 7 |
@@ -188,15 +227,15 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | test_compliance.py | 5 |
 | test_content.py | 8 |
 | test_debt_fixes.py | 43 |
+| test_dsp_client.py | 5 |
 | test_health.py | 2 |
 | test_orchestrator.py | 43 |
 | test_platforms.py | 24 |
 | test_risk.py | 11 |
 | test_security.py | 14 |
 | test_step3_routes.py | 36 |
-| test_dsp_client.py | 5 |
 | test_support_faq.py | 69 |
-| **Total** | **~318 functions (361 with parametrization)** |
+| **Total** | **~318 test functions (361 collected with parametrization)** |
 
 ### 2.8 CI/CD (GitHub Actions)
 
@@ -208,18 +247,27 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | `frontend.yml` | Changes to `frontend/**` | TypeScript check, ESLint, Next.js build |
 | `website.yml` | Changes to `website/**` | TypeScript check, ESLint, Next.js build |
 
-### 2.9 Documentation (27+ documents)
+### 2.9 Documentation (28 documents in `docs/`)
 
-architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, cost-analysis.md, launch-strategy.md, user-procedures.md, marketing_video.md, differentiation.md, due-diligence.md, viral-strategy.md, hybrid_launch_strategy.md, stripe_monetization_plan.md, audit_addendum.md, production_deployment_playbook.md, gap_analysis.md, new_prompt_for_checklist.md, **video_demo.md** (90s Loom/script), **demo_video.md** (animated demo page spec), website_redesign1.md through website_redesign8.md (8 iterative design feedback docs).
+`architecture.md`, `guardrailed-bidding.md`, `security-compliance.md`, `data-moat.md`, `cost-analysis.md`, `launch-strategy.md`, `user-procedures.md`, `marketing_video.md`, `differentiation.md`, `due-diligence.md`, `viral-strategy.md`, `hybrid_launch_strategy.md`, `stripe_monetization_plan.md`, `audit_addendum.md`, `production_deployment_playbook.md`, `gap_analysis.md`, `new_prompt_for_checklist.md`, `ctv_dsp_integration.md`, **`video_demo.md`** (90s Loom script), **`demo_video.md`** (animated demo page spec), `website_redesign1.md` through `website_redesign8.md` (8 iterative design feedback docs).
+
+Root-level: `README.md`, `CONTRIBUTING.md`, `LICENSE`, `SECURITY.md`, `GO_LIVE_CHECKLIST.md`, `LOCAL_STRIPE_TEST.md`, `BUILD_LOG.md`, `chat-history.md`, `cost_analysis.md` (duplicate copy), `ai_marketing_platform_5fc51575.plan.md`, `start.md`.
 
 ### 2.10 Marketing Assets
 
-- 8 video files (60s marketing videos in 4 aspect ratios, 9s clips, final cut)
-- 2 thumbnails (landscape + portrait)
-- **Demo walkthrough:** `orchestraai_demo.mp4` (~86s), `narration_full.mp3` + 5 section clips (`docs/video/`), `record_demo.py` (Playwright + ffmpeg)
-- 1 product image (JPEG)
-- 1 OG image (1200x630 branded social sharing card)
-- Video enhancement script (enhance_video.py)
+`docs/video/`:
+
+- 9 video files: 60s marketing cuts in 4 aspect ratios (`16x9`, `9x16`, `1x1`, `marketing_60s`, `marketing_60s_075x`), two 9-second clips, a `final` cut, and the `orchestraai_demo.mp4` walkthrough.
+- 6 narration tracks: `narration_full.mp3` + `narration_01_hook.mp3` through `narration_05_cta.mp3`.
+- 2 thumbnails (`thumbnail.png` landscape, `thumbnail_portrait.png` portrait).
+- `record_demo.py` -- Playwright + ffmpeg + Edge TTS recording pipeline.
+
+Root-level:
+
+- `enhance_video.py` -- video enhancement / upscaling script.
+- `chat_load.jpg`, `requirements.jpg` -- product screenshots.
+- `website/public/og-image.png` -- 1200x630 branded social-sharing card.
+- `website/public/orchestraai_demo.mp4` -- 10.4 MB walkthrough served by the marketing site.
 
 ### 2.11 Infrastructure
 
@@ -267,12 +315,16 @@ architecture.md, guardrailed-bidding.md, security-compliance.md, data-moat.md, c
 ```
 Branch:    master
 Remote:    Up to date with origin/master
-Commits:   42 total
+Commits:   46 total (+1 pending: housekeeping)
 ```
 
 ### Recent commits (newest first):
 
 ```
+b3f6390  docs: update STATE_OF_THE_UNION for CTV/DSP, tests, commits, next steps
+7ed5258  fix: gate CTV analytics preview behind overview flag for unit tests
+27d252c  feat: programmatic CTV/DSP client, orchestrator branch, analytics VCR/eCPM, dashboard UI
+00f0e21  docs: update STATE_OF_THE_UNION for demo video, embed, and /demo UX
 f62e40b  ux: move demo overview video below hero on /demo page
 7ae4c33  feat: embed demo video on /demo page, replace placeholder with OrchestraAI walkthrough
 0f5c7f5  feat: add automated demo video with narration audio and recording script
@@ -283,29 +335,40 @@ f62e40b  ux: move demo overview video below hero on /demo page
 c2805a9  fix: increase HeroPipeline node and label font sizes for readability
 ```
 
+### CRO briefs (now in `docs/`)
+
+Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `frontend/src/app/` (App Router tree — bundling foot-gun) into `docs/`:
+
+- `docs/cro_demo_page.md` -- 5-step brief that produced the `ContentCreationScene` typing effect, Seedance state, VCG emphasis, and kill-switch dashboard upgrades.
+- `docs/cro_landing_page.md` -- 5-step brief that produced the structured testimonials, `HowItWorksVideoEmbed`, guarded-trial microcopy, `EnterpriseTrustStrip`, and sticky Navbar.
+
 ---
 
 ## 5. Next Steps (Priority Order)
 
+### Housekeeping
+
+1. ~~Move CRO briefs out of the Next.js app folder.~~ Done — now at `docs/cro_demo_page.md` and `docs/cro_landing_page.md` (2026-04-18).
+2. ~~Replace the sample-video fallback in `HowItWorksVideoEmbed`.~~ Done — now points at `/orchestraai_demo.mp4` with `/og-image.png` as poster (2026-04-18).
+3. **Stub or ship the "Team Management" and "API Keys" tiles on `/settings`.** They currently render as disabled (`ready: false`) placeholders; either hide them until ready or expose the existing `APIKey` model end-to-end.
+
 ### Marketing & Growth (no engineering blockers)
 
-1. ~~**Deploy updated marketing website**~~ -- Completed. All 8 rounds of redesign (including hybrid 3D/2D pipeline demo) pushed to production on Vercel.
-2. ~~**Ship 90s demo video on `/demo`**~~ -- Completed. `orchestraai_demo.mp4` embedded via `DemoWatchVideoSection`; direct URL `https://www.useorchestra.dev/orchestraai_demo.mp4`; overview block under hero with `#demo-overview-video`.
-3. **Upload marketing videos** to platforms:
-   - Product Hunt (16:9 + thumbnail)
-   - Twitter/X launch thread (9:16)
-   - LinkedIn post (16:9)
-   - Instagram Reels (9:16)
-4. **Collect real testimonials** -- Replace placeholder social proof on the website with quotes from actual users.
-5. **Expand FAQ** -- Add tenant-specific FAQs as customers onboard.
+4. ~~Deploy updated marketing website~~ -- Completed. All 8 rounds + CRO pass pushed to Vercel.
+5. ~~Ship 90s demo video on `/demo`~~ -- Completed. `orchestraai_demo.mp4` embedded via `DemoWatchVideoSection`.
+6. ~~Add Enterprise Trust Strip + How-It-Works video embed + guarded-trial microcopy + sticky Navbar + structured testimonials~~ -- Completed in commit `1e4b7fe`.
+7. **Upload marketing videos** to platforms: Product Hunt (16:9 + thumbnail), Twitter/X launch thread (9:16), LinkedIn (16:9), Instagram Reels (9:16).
+8. **Collect real testimonials.** Replace the placeholder personas (Sarah Jenkins / Acme Digital, Marcus Chen / Northline Commerce, Elena Vasquez / Signal & Tide) with quotes from real customers once live.
+9. **Expand FAQ** as customers onboard; tenant-scoped entries are already supported (`FAQEntry.tenant_id` nullable).
 
 ### Future Engineering (when needed)
 
-6. **Wire production DSP** -- Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway; align `DSPClient` HTTP paths/JSON with your vendor’s real API (code is TTD-shaped template).
-7. **A/B testing runtime** -- Build the experiment assignment/tracking logic on top of the Experiment API endpoints.
-8. **Feature flags** -- Per-tenant feature gating beyond subscription tiers (implement when enterprise customers request it).
-9. **Make DB pool sizes configurable** -- Move pool_size, max_overflow, and safety limits to environment variables.
-10. **Uptime monitoring** -- Add external health check monitoring (e.g., BetterUptime, UptimeRobot).
+10. **Dashboard pages for Platforms + Kill Switch.** Backend endpoints exist (`/api/v1/platforms`, `/api/v1/kill-switch`); only the frontend pages are missing. Add to `frontend/src/app/platforms/page.tsx` and `frontend/src/app/kill-switch/page.tsx`, then wire into `Sidebar.tsx`.
+11. **Wire production DSP.** Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway and align `DSPClient` HTTP paths/JSON with your vendor's real API (current code is TTD-shaped template).
+12. **A/B testing runtime.** Build assignment/tracking logic on top of the `Experiment` API endpoints.
+13. **Feature flags.** Per-tenant feature gating beyond subscription tiers.
+14. **Make DB pool sizes configurable.** Move `pool_size`, `max_overflow`, and safety limits to environment variables.
+15. **Uptime monitoring.** Add external health-check monitoring (BetterUptime, UptimeRobot).
 
 ---
 
@@ -331,20 +394,21 @@ c2805a9  fix: increase HeroPipeline node and label font sizes for readability
 
 | Check | Status |
 |-------|--------|
-| Python tests (pytest) | 355 passed |
+| Python tests (pytest) | **361 passed** (6 warnings, 6.31s) |
 | Python lint (ruff check) | Clean |
 | Python format (ruff format) | Clean |
-| Frontend TypeScript (tsc --noEmit) | Zero errors |
+| Frontend TypeScript (`tsc --noEmit`) | Zero errors |
 | Frontend ESLint | Zero errors |
-| Frontend build (next build) | Success |
-| Website TypeScript (tsc --noEmit) | Zero errors |
+| Frontend build (`next build`) | Success |
+| Website TypeScript (`tsc --noEmit`) | Zero errors |
 | Website ESLint | Zero errors |
-| Website build (next build) | Success (11 static pages including sitemap.xml) |
+| Website build (`next build`) | Success (7 pages + sitemap.xml + robots.txt) |
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
-| Demo video public asset | `website/public/orchestraai_demo.mp4` deployed with site |
+| Demo video public asset | `website/public/orchestraai_demo.mp4` (10.4 MB) deployed with site |
+| CRO components | `EnterpriseTrustStrip`, `HowItWorksVideoEmbed`, sticky `Navbar`, guarded-trial microcopy live |
 | CTV / DSP | `tests/test_dsp_client.py` + orchestrator `ctv`/`streaming_tv` branch |
-| Git working tree | Verify with `git status` before release |
+| Git working tree | Clean |
 
 ---
 
