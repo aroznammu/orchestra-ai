@@ -7,7 +7,9 @@ import {
   HelpCircle,
   LayoutDashboard,
   Megaphone,
+  Plug,
   Settings,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +19,8 @@ const NAV_ITEMS = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/orchestrator", label: "AI Orchestrator", icon: BrainCircuit },
+  { href: "/platforms", label: "Platforms", icon: Plug },
+  { href: "/kill-switch", label: "Kill Switch", icon: ShieldAlert },
   { href: "/support", label: "Support", icon: HelpCircle },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;

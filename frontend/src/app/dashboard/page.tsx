@@ -30,7 +30,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { TooltipProps } from "recharts";
+import type { TooltipContentProps } from "recharts";
 
 // ---------------------------------------------------------------------------
 // Data fetching
@@ -146,7 +146,7 @@ function buildChartData(
 function PlatformPerformanceTooltip({
   active,
   payload,
-}: TooltipProps<number, string>) {
+}: TooltipContentProps<number, string>) {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload as {
     platform: string;

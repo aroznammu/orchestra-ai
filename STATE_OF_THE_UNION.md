@@ -122,7 +122,7 @@ Total: **118 Python source files** under `src/orchestra/` across 12 top-level pa
 
 ### 2.2 Frontend Dashboard (Next.js 16 + React 19 + Tailwind 4)
 
-Next.js App Router. 10 routable pages, 1 root redirect, 1 global error page, 4 shared layout/UI components (`AppShell`, `Header`, `Sidebar`, `Providers`, `ui/card`). 17 `.tsx` files total.
+Next.js App Router. 12 routable pages, 1 root redirect, 1 global error page, 4 shared layout/UI components (`AppShell`, `Header`, `Sidebar`, `Providers`, `ui/card`).
 
 | Page | Route | Purpose |
 |------|-------|---------|
@@ -131,17 +131,17 @@ Next.js App Router. 10 routable pages, 1 root redirect, 1 global error page, 4 s
 | Campaigns | `/campaigns` | Campaign list, create, launch, pause |
 | Analytics | `/analytics` | Cross-platform metrics and charts (Recharts) |
 | AI Orchestrator | `/orchestrator` | Natural-language AI interface |
+| Platforms | `/platforms` | OAuth connect / disconnect for the 9 platform connectors, stub-mode warnings, per-platform account + connected-since metadata |
+| Kill Switch | `/kill-switch` | Tenant + global status banner, activate-with-reason modal + owner-only guard, deactivate flow, event-history feed, 15s polling |
 | Support | `/support` | AI chat + FAQ accordion |
 | Settings | `/settings` | Account / team / API-keys hub (team + API-keys placeholders link out to future work) |
 | Billing & Plans | `/settings/billing` | Stripe checkout + subscription management |
 | Change Password | `/settings/password` | Password change |
 | Landing redirect | `/` | Redirects signed-out visitors to `/login`, signed-in to `/dashboard` |
 
-**Sidebar nav (`frontend/src/components/layout/Sidebar.tsx`)**: Dashboard, Campaigns, Analytics, AI Orchestrator, Support, Settings (6 items; auto-expand on hover).
+**Sidebar nav (`frontend/src/components/layout/Sidebar.tsx`)**: Dashboard, Campaigns, Analytics, AI Orchestrator, Platforms, Kill Switch, Support, Settings (8 items; auto-expand on hover).
 
-Platform-connection management and kill-switch controls are exposed through the backend REST API and the AI Orchestrator text interface -- they are not yet standalone dashboard pages.
-
-Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights, TanStack Query for data fetching, `lucide-react` icons, `recharts` for charts.
+Integrations: Sentry error monitoring, Vercel Analytics, Vercel Speed Insights, TanStack Query for data fetching + mutations, `lucide-react` icons, `recharts` for charts.
 
 ### 2.3 Promotional Website (Next.js 16, separate project)
 
@@ -314,8 +314,8 @@ Root-level:
 
 ```
 Branch:    master
-Remote:    Up to date with origin/master
-Commits:   46 total (+1 pending: housekeeping)
+Remote:    ahead of origin/master by 2 commits (housekeeping + platforms/kill-switch pages)
+Commits:   48 total
 ```
 
 ### Recent commits (newest first):
@@ -363,7 +363,7 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 
 ### Future Engineering (when needed)
 
-10. **Dashboard pages for Platforms + Kill Switch.** Backend endpoints exist (`/api/v1/platforms`, `/api/v1/kill-switch`); only the frontend pages are missing. Add to `frontend/src/app/platforms/page.tsx` and `frontend/src/app/kill-switch/page.tsx`, then wire into `Sidebar.tsx`.
+10. ~~Dashboard pages for Platforms + Kill Switch.~~ Done — shipped 2026-04-18 at `/platforms` and `/kill-switch`, wired into `Sidebar.tsx`, backed by new TanStack Query hooks in `apiClient.ts`.
 11. **Wire production DSP.** Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway and align `DSPClient` HTTP paths/JSON with your vendor's real API (current code is TTD-shaped template).
 12. **A/B testing runtime.** Build assignment/tracking logic on top of the `Experiment` API endpoints.
 13. **Feature flags.** Per-tenant feature gating beyond subscription tiers.
@@ -403,6 +403,7 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 | Website TypeScript (`tsc --noEmit`) | Zero errors |
 | Website ESLint | Zero errors |
 | Website build (`next build`) | Success (7 pages + sitemap.xml + robots.txt) |
+| Frontend build (`next build`) | Success (12 pages + 404, all static, incl. new `/platforms` and `/kill-switch`) |
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
 | Demo video public asset | `website/public/orchestraai_demo.mp4` (10.4 MB) deployed with site |

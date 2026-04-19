@@ -168,6 +168,14 @@ export async function put<T = unknown>(
   return handleResponse<T>(res);
 }
 
+export async function del<T = unknown>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  return handleResponse<T>(res);
+}
+
 // ---------------------------------------------------------------------------
 // Orchestrator types
 // ---------------------------------------------------------------------------
@@ -433,4 +441,131 @@ export async function deleteFAQ(id: string): Promise<void> {
   if (!res.ok) {
     await handleResponse(res);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Platforms types & functions
+// ---------------------------------------------------------------------------
+
+export type PlatformKey =
+  | "facebook"
+  | "instagram"
+  | "tiktok"
+  | "twitter"
+  | "youtube"
+  | "google_ads"
+  | "linkedin"
+  | "snapchat"
+  | "pinterest";
+
+export interface PlatformLimits {
+  max_text_length?: number;
+  max_hashtags?: number;
+  max_images?: number;
+  max_video_seconds?: number;
+  supports_video?: boolean;
+  supports_images?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AvailablePlatform {
+  platform: PlatformKey;
+  name: string;
+  limits: PlatformLimits;
+  is_stub: boolean;
+}
+
+export interface AvailablePlatformsResponse {
+  platforms: AvailablePlatform[];
+}
+
+export interface PlatformConnection {
+  id: string;
+  platform: PlatformKey;
+  is_active: boolean;
+  platform_user_id: string | null;
+  connected_at: string;
+}
+
+export interface PlatformConnectionsResponse {
+  connections: PlatformConnection[];
+  available: PlatformKey[];
+}
+
+export interface PlatformAuthInitResponse {
+  auth_url: string;
+  state: string;
+}
+
+export async function listAvailablePlatforms(): Promise<AvailablePlatformsResponse> {
+  return get<AvailablePlatformsResponse>("/platforms/available");
+}
+
+export async function listPlatformConnections(): Promise<PlatformConnectionsResponse> {
+  return get<PlatformConnectionsResponse>("/platforms/connections");
+}
+
+export async function initPlatformAuth(
+  platform: PlatformKey,
+  redirectUri: string,
+): Promise<PlatformAuthInitResponse> {
+  return post<PlatformAuthInitResponse>("/platforms/auth/init", {
+    platform,
+    redirect_uri: redirectUri,
+  });
+}
+
+export async function disconnectPlatform(
+  platform: PlatformKey,
+): Promise<{ status: string; platform: string }> {
+  return del<{ status: string; platform: string }>(
+    `/platforms/connections/${platform}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kill Switch types & functions
+// ---------------------------------------------------------------------------
+
+export interface KillSwitchStatus {
+  global_active: boolean;
+  tenant_active: boolean;
+  is_affected: boolean;
+}
+
+export interface KillSwitchEvent {
+  id: string;
+  tenant_id: string;
+  action: string;
+  triggered_by: string;
+  reason: string;
+  timestamp: string;
+  affected_platforms: string[];
+  affected_campaigns: string[];
+}
+
+export async function getKillSwitchStatus(): Promise<KillSwitchStatus> {
+  return get<KillSwitchStatus>("/kill-switch/status");
+}
+
+export async function activateKillSwitch(
+  reason: string,
+): Promise<{ activated: boolean; event_id: string; reason: string }> {
+  return post<{ activated: boolean; event_id: string; reason: string }>(
+    "/kill-switch/activate",
+    { reason },
+  );
+}
+
+export async function deactivateKillSwitch(): Promise<{
+  deactivated: boolean;
+  event_id: string;
+}> {
+  return post<{ deactivated: boolean; event_id: string }>(
+    "/kill-switch/deactivate",
+  );
+}
+
+export async function getKillSwitchHistory(): Promise<KillSwitchEvent[]> {
+  return get<KillSwitchEvent[]>("/kill-switch/history");
 }
