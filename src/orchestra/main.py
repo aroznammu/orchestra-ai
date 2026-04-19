@@ -16,6 +16,7 @@ from orchestra.api.middleware.audit import AuditLogMiddleware
 from orchestra.api.middleware.rate_limit import RateLimitMiddleware
 from orchestra.api.routes import (
     analytics,
+    api_keys,
     audit,
     auth,
     billing,
@@ -213,6 +214,7 @@ app.include_router(kill_switch.router, prefix="/api/v1")
 app.include_router(support.router, prefix="/api/v1")
 app.include_router(faq.router, prefix="/api/v1")
 app.include_router(experiments.router, prefix="/api/v1")
+app.include_router(api_keys.router, prefix="/api/v1")
 
 # --- Dashboard UI ---
 

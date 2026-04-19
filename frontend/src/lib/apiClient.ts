@@ -569,3 +569,50 @@ export async function deactivateKillSwitch(): Promise<{
 export async function getKillSwitchHistory(): Promise<KillSwitchEvent[]> {
   return get<KillSwitchEvent[]>("/kill-switch/history");
 }
+
+// ---------------------------------------------------------------------------
+// API Keys types & functions
+// ---------------------------------------------------------------------------
+
+export type APIKeyRole = "viewer" | "member" | "admin";
+
+export interface APIKey {
+  id: string;
+  name: string;
+  role: string;
+  is_active: boolean;
+  last_used_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface APIKeyListResponse {
+  keys: APIKey[];
+}
+
+export interface APIKeyCreateResponse extends APIKey {
+  /** Full plaintext key (returned exactly once at creation) */
+  key: string;
+  /** First 8 characters of the plaintext key, safe to echo back later */
+  prefix: string;
+}
+
+export interface CreateAPIKeyPayload {
+  name: string;
+  role?: APIKeyRole;
+  expires_in_days?: number | null;
+}
+
+export async function listAPIKeys(): Promise<APIKeyListResponse> {
+  return get<APIKeyListResponse>("/api-keys");
+}
+
+export async function createAPIKey(
+  payload: CreateAPIKeyPayload,
+): Promise<APIKeyCreateResponse> {
+  return post<APIKeyCreateResponse>("/api-keys", payload);
+}
+
+export async function revokeAPIKey(id: string): Promise<void> {
+  await del<void>(`/api-keys/${id}`);
+}

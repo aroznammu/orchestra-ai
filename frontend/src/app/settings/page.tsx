@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard, KeyRound, Lock, Users } from "lucide-react";
+import { CreditCard, KeyRound, Lock } from "lucide-react";
 import Link from "next/link";
 
 const SECTIONS = [
@@ -20,18 +20,12 @@ const SECTIONS = [
     ready: true,
   },
   {
-    href: "/settings",
-    label: "Team Management",
-    description: "Invite members, manage roles, and configure team access.",
-    icon: Users,
-    ready: false,
-  },
-  {
-    href: "/settings",
+    href: "/settings/api-keys",
     label: "API Keys",
-    description: "Generate and manage API keys for programmatic access.",
+    description:
+      "Issue hashed, revocable API keys for CI, integrations, and scripts.",
     icon: KeyRound,
-    ready: false,
+    ready: true,
   },
 ] as const;
 

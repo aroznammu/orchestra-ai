@@ -1,9 +1,9 @@
 # OrchestraAI -- State of the Union
 
-**Updated:** 2026-04-18 (full-codebase audit + CRO polish sync)
-**Branch:** `master` (up to date with `origin/master`)
-**Test Suite:** 361 tests, all passing (15 test modules, ~6.3s wall time)
-**Commits:** 46 total
+**Updated:** 2026-04-18 (full-codebase audit + CRO polish sync + API-keys CRUD)
+**Branch:** `master` (ahead of `origin/master`)
+**Test Suite:** 380 tests, all passing (16 test modules, ~6s wall time)
+**Commits:** 49 total
 
 ---
 
@@ -108,8 +108,8 @@ Total: **118 Python source files** under `src/orchestra/` across 12 top-level pa
 
 | Category | Count | Details |
 |----------|-------|---------|
-| API route files | 14 | `analytics`, `audit`, `auth`, `billing`, `campaigns`, `experiments`, `faq`, `gdpr`, `health`, `kill_switch`, `orchestrator`, `platforms`, `reports`, `support` |
-| API endpoints | 56+ | Full CRUD + specialized actions including GDPR export download endpoint |
+| API route files | 15 | `analytics`, `api_keys`, `audit`, `auth`, `billing`, `campaigns`, `experiments`, `faq`, `gdpr`, `health`, `kill_switch`, `orchestrator`, `platforms`, `reports`, `support` |
+| API endpoints | 59+ | Full CRUD + specialized actions including GDPR export download and tenant-scoped API-key issuance/revocation |
 | Agent modules (`src/orchestra/agents/`) | 13 | `orchestrator`, `content`, `analytics_agent`, `optimizer`, `compliance`, `platform_agent`, `policy`, `safety`, `support_agent`, `trace`, `contracts`, `dsp_publish`, plus `tools/` subpackage |
 | Core services (`src/orchestra/core/`) | 5 | `video_service`, `visual_compliance`, `cost_router`, `scheduler`, `billing`, `events`, `exceptions` |
 | DB models | 13 | `Tenant`, `User`, `PlatformConnection`, `Campaign`, `CampaignPost`, `AuditLog`, `Experiment`, `KillSwitchEventLog`, `APIKey`, `ChatSession`, `ChatMessage`, `FAQEntry`, `SpendRecord` (see `src/orchestra/db/models.py`) |
@@ -122,7 +122,7 @@ Total: **118 Python source files** under `src/orchestra/` across 12 top-level pa
 
 ### 2.2 Frontend Dashboard (Next.js 16 + React 19 + Tailwind 4)
 
-Next.js App Router. 12 routable pages, 1 root redirect, 1 global error page, 4 shared layout/UI components (`AppShell`, `Header`, `Sidebar`, `Providers`, `ui/card`).
+Next.js App Router. 13 routable pages, 1 root redirect, 1 global error page, 4 shared layout/UI components (`AppShell`, `Header`, `Sidebar`, `Providers`, `ui/card`).
 
 | Page | Route | Purpose |
 |------|-------|---------|
@@ -134,9 +134,10 @@ Next.js App Router. 12 routable pages, 1 root redirect, 1 global error page, 4 s
 | Platforms | `/platforms` | OAuth connect / disconnect for the 9 platform connectors, stub-mode warnings, per-platform account + connected-since metadata |
 | Kill Switch | `/kill-switch` | Tenant + global status banner, activate-with-reason modal + owner-only guard, deactivate flow, event-history feed, 15s polling |
 | Support | `/support` | AI chat + FAQ accordion |
-| Settings | `/settings` | Account / team / API-keys hub (team + API-keys placeholders link out to future work) |
+| Settings | `/settings` | Account / billing / API-keys hub (Team Management hidden until the multi-user invite flow ships) |
 | Billing & Plans | `/settings/billing` | Stripe checkout + subscription management |
 | Change Password | `/settings/password` | Password change |
+| API Keys | `/settings/api-keys` | Issue, revoke, and audit hashed API keys. Admin/owner-gated; plaintext shown once on creation; supports per-key role (viewer/member/admin) and expiry presets (30d/90d/1y/never) |
 | Landing redirect | `/` | Redirects signed-out visitors to `/login`, signed-in to `/dashboard` |
 
 **Sidebar nav (`frontend/src/components/layout/Sidebar.tsx`)**: Dashboard, Campaigns, Analytics, AI Orchestrator, Platforms, Kill Switch, Support, Settings (8 items; auto-expand on hover).
@@ -216,10 +217,11 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 
 ### 2.7 Testing
 
-15 test modules + `conftest.py`. `pytest tests --collect-only` reports **361 tests**, all green (`361 passed, 6 warnings in 6.31s`).
+16 test modules + `conftest.py`. `pytest tests --collect-only` reports **380 tests**, all green (`380 passed, 5 warnings in ~6s`).
 
 | Test Module | Tests |
 |-------------|-------|
+| test_api_keys.py | 19 |
 | test_auth.py | 7 |
 | test_auth_pipeline.py | 16 |
 | test_bidding.py | 12 |
@@ -235,7 +237,7 @@ Twitter/X v2, YouTube v3, TikTok v2, Pinterest v5, Facebook Graph v19, Instagram
 | test_security.py | 14 |
 | test_step3_routes.py | 36 |
 | test_support_faq.py | 69 |
-| **Total** | **~318 test functions (361 collected with parametrization)** |
+| **Total** | **~337 test functions (380 collected with parametrization)** |
 
 ### 2.8 CI/CD (GitHub Actions)
 
@@ -314,13 +316,16 @@ Root-level:
 
 ```
 Branch:    master
-Remote:    ahead of origin/master by 2 commits (housekeeping + platforms/kill-switch pages)
-Commits:   48 total
+Remote:    ahead of origin/master by 3 commits (housekeeping + platforms/kill-switch pages + API-keys CRUD)
+Commits:   49 total
 ```
 
 ### Recent commits (newest first):
 
 ```
+cf155c9  feat(api-keys): ship /api/v1/api-keys CRUD + /settings/api-keys UI
+bceda2d  feat(frontend): ship /platforms and /kill-switch dashboard pages
+0a1cdb0  housekeeping: relocate CRO briefs to docs/, point HowItWorks embed at real walkthrough
 b3f6390  docs: update STATE_OF_THE_UNION for CTV/DSP, tests, commits, next steps
 7ed5258  fix: gate CTV analytics preview behind overview flag for unit tests
 27d252c  feat: programmatic CTV/DSP client, orchestrator branch, analytics VCR/eCPM, dashboard UI
@@ -331,8 +336,6 @@ f62e40b  ux: move demo overview video below hero on /demo page
 1e4b7fe  Marketing site: demo interactivity, Seedance CRO, landing trust strip
 04d0c41  docs: update STATE_OF_THE_UNION with animated demo scenes and 3D pipeline work
 4167809  feat: replace demo page placeholder with 6 animated interactive scene components
-1e1c7d1  feat: add hybrid 3D/2D interactive pipeline demo with Three.js
-c2805a9  fix: increase HeroPipeline node and label font sizes for readability
 ```
 
 ### CRO briefs (now in `docs/`)
@@ -350,7 +353,7 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 
 1. ~~Move CRO briefs out of the Next.js app folder.~~ Done — now at `docs/cro_demo_page.md` and `docs/cro_landing_page.md` (2026-04-18).
 2. ~~Replace the sample-video fallback in `HowItWorksVideoEmbed`.~~ Done — now points at `/orchestraai_demo.mp4` with `/og-image.png` as poster (2026-04-18).
-3. **Stub or ship the "Team Management" and "API Keys" tiles on `/settings`.** They currently render as disabled (`ready: false`) placeholders; either hide them until ready or expose the existing `APIKey` model end-to-end.
+3. ~~Stub or ship the "Team Management" and "API Keys" tiles on `/settings`.~~ Done (2026-04-18) — shipped API Keys end-to-end (`/api/v1/api-keys` CRUD + `/settings/api-keys` UI), hid the Team Management tile until the multi-user invite flow is real.
 
 ### Marketing & Growth (no engineering blockers)
 
@@ -364,11 +367,12 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 ### Future Engineering (when needed)
 
 10. ~~Dashboard pages for Platforms + Kill Switch.~~ Done — shipped 2026-04-18 at `/platforms` and `/kill-switch`, wired into `Sidebar.tsx`, backed by new TanStack Query hooks in `apiClient.ts`.
-11. **Wire production DSP.** Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway and align `DSPClient` HTTP paths/JSON with your vendor's real API (current code is TTD-shaped template).
-12. **A/B testing runtime.** Build assignment/tracking logic on top of the `Experiment` API endpoints.
-13. **Feature flags.** Per-tenant feature gating beyond subscription tiers.
-14. **Make DB pool sizes configurable.** Move `pool_size`, `max_overflow`, and safety limits to environment variables.
-15. **Uptime monitoring.** Add external health-check monitoring (BetterUptime, UptimeRobot).
+11. **Team Management (multi-user invite flow).** Needs: invite route (email + role), accept flow, user-list + role-change UI, RBAC-gated removal. Hidden from `/settings` until shipped.
+12. **Wire production DSP.** Set `DSP_API_KEY`, `DSP_PARTNER_ID`, `DSP_BASE_URL` on Railway and align `DSPClient` HTTP paths/JSON with your vendor's real API (current code is TTD-shaped template).
+13. **A/B testing runtime.** Build assignment/tracking logic on top of the `Experiment` API endpoints.
+14. **Feature flags.** Per-tenant feature gating beyond subscription tiers.
+15. **Make DB pool sizes configurable.** Move `pool_size`, `max_overflow`, and safety limits to environment variables.
+16. **Uptime monitoring.** Add external health-check monitoring (BetterUptime, UptimeRobot).
 
 ---
 
@@ -394,7 +398,7 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 
 | Check | Status |
 |-------|--------|
-| Python tests (pytest) | **361 passed** (6 warnings, 6.31s) |
+| Python tests (pytest) | **380 passed** (5 warnings, ~6s) |
 | Python lint (ruff check) | Clean |
 | Python format (ruff format) | Clean |
 | Frontend TypeScript (`tsc --noEmit`) | Zero errors |
@@ -403,7 +407,7 @@ Two Principal-UX CRO briefs drove the `1e4b7fe` polish round. Relocated from `fr
 | Website TypeScript (`tsc --noEmit`) | Zero errors |
 | Website ESLint | Zero errors |
 | Website build (`next build`) | Success (7 pages + sitemap.xml + robots.txt) |
-| Frontend build (`next build`) | Success (12 pages + 404, all static, incl. new `/platforms` and `/kill-switch`) |
+| Frontend build (`next build`) | Success (13 pages + 404, all static, incl. `/platforms`, `/kill-switch`, and new `/settings/api-keys`) |
 | Stripe live payment | Tested ($99 charged and refunded) |
 | Website 3D deps (three, R3F, drei) | Installed, zero build warnings |
 | Demo video public asset | `website/public/orchestraai_demo.mp4` (10.4 MB) deployed with site |
